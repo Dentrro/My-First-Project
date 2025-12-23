@@ -61,7 +61,7 @@
 
         #restartBtn {
             top: 10px;
-            left: 70px;
+            left: 120px;
             width: 50px;
             height: 50px;
             font-size: 24px;
@@ -194,7 +194,7 @@
         #fpsDisplay {
             position: absolute;
             top: 10px;
-            left: 190px;
+            left: 70px;
             background: rgba(255,255,255,0.5);
             padding: 10px 15px;
             border-radius: 8px;
@@ -235,7 +235,7 @@
 
         #menuBtn {
             top: 10px;
-            left: 130px;
+            left: 160px;
             width: 50px;
             height: 50px;
             font-size: 24px;
@@ -986,10 +986,7 @@
             jumpCount: 0,
             isCrouching: false,
             walkFrame: 0,
-            walkAnimationSpeed: 0.2,
-            direction: 1,
-            onWall: false,
-            wallSide: 0
+            walkAnimationSpeed: 0.2
         };
 
         // Seeded random number generator for consistent levels
@@ -1102,7 +1099,6 @@
                 ctx.fillStyle = '#9b59b6';
                 ctx.fillRect(x, y + bounce, w, h - bounce);
                 drawEyes(x, y + bounce, w, h - bounce, 'white', 'black');
-                drawMouth(x, y + bounce, w, h - bounce);
             },
             red: (x, y, w, h, frame) => {
                 const bounce = Math.sin(frame) * 2;
@@ -1112,7 +1108,6 @@
                 ctx.lineWidth = 2;
                 ctx.strokeRect(x, y + bounce, w, h - bounce);
                 drawEyes(x, y + bounce, w, h - bounce, 'yellow', 'black');
-                drawMouth(x, y + bounce, w, h - bounce);
             },
             blue: (x, y, w, h, frame) => {
                 const bounce = Math.sin(frame) * 2;
@@ -1121,7 +1116,6 @@
                 ctx.fillStyle = '#2980b9';
                 ctx.fillRect(x + w/4, y + bounce, w/2, 3);
                 drawEyes(x, y + bounce, w, h - bounce, 'white', '#2c3e50');
-                drawMouth(x, y + bounce, w, h - bounce);
             },
             green: (x, y, w, h, frame) => {
                 const bounce = Math.sin(frame) * 2;
@@ -1130,7 +1124,6 @@
                 ctx.arc(x + w/2, y + h/2 + bounce, w/2, 0, Math.PI * 2);
                 ctx.fill();
                 drawEyes(x, y + bounce, w, h - bounce, 'white', 'black');
-                drawMouth(x, y + bounce, w, h - bounce);
             },
             gold: (x, y, w, h, frame) => {
                 const bounce = Math.sin(frame) * 2;
@@ -1150,7 +1143,6 @@
                 ctx.closePath();
                 ctx.fill();
                 drawEyes(x, y + bounce, w, h - bounce, 'black', 'white');
-                drawMouth(x, y + bounce, w, h - bounce);
             },
             ninja: (x, y, w, h, frame) => {
                 const bounce = Math.sin(frame) * 2;
@@ -1184,23 +1176,14 @@
                 // Visor
                 ctx.fillStyle = '#3498db';
                 ctx.fillRect(x + 5, y + bounce + 8, w - 10, 6);
-                // LED mouth
-                ctx.fillStyle = '#2ecc71';
-                ctx.fillRect(x + 8, y + bounce + 18, 4, 2);
-                ctx.fillRect(x + 14, y + bounce + 18, 4, 2);
-                ctx.fillRect(x + 20, y + bounce + 18, 4, 2);
             }
         };
 
-        // Draw eyes with smaller size and directional pupils
+        // Draw eyes with smaller size
         function drawEyes(x, y, w, h, eyeColor, pupilColor) {
-            const eyeSize = 5;
-            const pupilSize = 2.5;
+            const eyeSize = 5; // Made smaller
+            const pupilSize = 2.5; // Made smaller
             const eyeY = y + 8;
-
-            // Pupil offset based on player direction
-            const pupilOffsetX = player.direction * 1.5;
-            const pupilOffsetY = (player.vy > 0 ? 0.5 : (player.vy < 0 ? -0.5 : 0));
 
             ctx.fillStyle = eyeColor;
             ctx.beginPath();
@@ -1210,19 +1193,9 @@
 
             ctx.fillStyle = pupilColor;
             ctx.beginPath();
-            ctx.arc(x + 10 + pupilOffsetX, eyeY + pupilOffsetY, pupilSize, 0, Math.PI * 2);
-            ctx.arc(x + 20 + pupilOffsetX, eyeY + pupilOffsetY, pupilSize, 0, Math.PI * 2);
+            ctx.arc(x + 10, eyeY, pupilSize, 0, Math.PI * 2);
+            ctx.arc(x + 20, eyeY, pupilSize, 0, Math.PI * 2);
             ctx.fill();
-        }
-
-        // Draw cute mouth
-        function drawMouth(x, y, w, h) {
-            ctx.strokeStyle = 'rgba(0,0,0,0.6)';
-            ctx.lineWidth = 1.5;
-            ctx.beginPath();
-            // Cute smile
-            ctx.arc(x + w/2, y + 15, 6, 0.2, Math.PI - 0.2);
-            ctx.stroke();
         }
 
         // Draw player with animation
@@ -1446,27 +1419,17 @@
             // Horizontal movement
             if (isKeyPressed('left')) {
                 player.vx = -moveSpeed;
-                player.direction = -1;
             } else if (isKeyPressed('right')) {
                 player.vx = moveSpeed;
-                player.direction = 1;
             } else {
                 player.vx *= friction;
             }
 
-            // Jumping with super jump support and wall jumping
+            // Jumping with super jump support
             if (isKeyPressed('jump') && !keys.jumpPressed && !player.isCrouching) {
                 const jumpPower = game.powerups.superJump ? player.jumpPower * 2 : player.jumpPower;
                 if (player.onGround) {
                     player.vy = -jumpPower;
-                    player.jumpCount = 1;
-                    game.totalJumps++;
-                    checkAdvancements();
-                } else if (player.onWall) {
-                    // Wall jump: jump away from wall
-                    player.vy = -jumpPower * 0.9;
-                    player.vx = -player.wallSide * player.speed * 2;
-                    player.onWall = false;
                     player.jumpCount = 1;
                     game.totalJumps++;
                     checkAdvancements();
@@ -1492,9 +1455,6 @@
 
             // Platform collision (skip if ghost mode is active)
             player.onGround = false;
-            player.onWall = false;
-            player.wallSide = 0;
-
             if (!game.powerups.ghostMode) {
                 levelData.platforms.forEach(platform => {
                     if (checkCollision(player, platform)) {
@@ -1508,23 +1468,12 @@
                             player.vy = 0;
                         }
 
-                        // Wall collision detection for wall jumping
                         if (player.vx > 0 && player.x + player.width - player.vx < platform.x + 5) {
                             player.x = platform.x - player.width;
                             player.vx = 0;
-                            if (!player.onGround && player.vy > 0) {
-                                player.onWall = true;
-                                player.wallSide = 1; // Right wall
-                                player.vy *= 0.8; // Slow down fall when on wall
-                            }
                         } else if (player.vx < 0 && player.x - player.vx > platform.x + platform.width - 5) {
                             player.x = platform.x + platform.width;
                             player.vx = 0;
-                            if (!player.onGround && player.vy > 0) {
-                                player.onWall = true;
-                                player.wallSide = -1; // Left wall
-                                player.vy *= 0.8; // Slow down fall when on wall
-                            }
                         }
                     }
                 });
@@ -2209,7 +2158,7 @@
 
             editorState = {
                 tool: 'platform',
-                platforms: [{x: 0, y: 560, width: 800, height: 40}],
+                platforms: [{x: 0, y: 360, width: 800, height: 40}],
                 spikes: [],
                 enemies: [],
                 coins: []

@@ -747,7 +747,19 @@
                 <canvas class="skin-preview" width="40" height="40" id="skinPreview7"></canvas>
                 Robot
             </div>
-            
+            <div class="skin-option" data-skin="cat">
+                <canvas class="skin-preview" width="40" height="40" id="skinPreview8"></canvas>
+                Cat
+            </div>
+            <div class="skin-option" data-skin="alien">
+                <canvas class="skin-preview" width="40" height="40" id="skinPreview9"></canvas>
+                Alien
+            </div>
+            <div class="skin-option" data-skin="fire">
+                <canvas class="skin-preview" width="40" height="40" id="skinPreview10"></canvas>
+                Fire Spirit
+            </div>
+
 
             <h3 style="margin-top: 30px;">Key Bindings</h3>
             <div class="keybind-item">
@@ -1189,6 +1201,108 @@
                 ctx.fillRect(x + 8, y + bounce + 18, 4, 2);
                 ctx.fillRect(x + 14, y + bounce + 18, 4, 2);
                 ctx.fillRect(x + 20, y + bounce + 18, 4, 2);
+            },
+            cat: (x, y, w, h, frame) => {
+                const bounce = Math.sin(frame) * 2;
+                // Body
+                ctx.fillStyle = '#ff9500';
+                ctx.fillRect(x, y + bounce, w, h - bounce);
+                // Ears
+                ctx.fillStyle = '#ff9500';
+                ctx.beginPath();
+                ctx.moveTo(x + 5, y + bounce + 5);
+                ctx.lineTo(x + 5, y + bounce);
+                ctx.lineTo(x + 10, y + bounce + 5);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.moveTo(x + 20, y + bounce + 5);
+                ctx.lineTo(x + 25, y + bounce);
+                ctx.lineTo(x + 25, y + bounce + 5);
+                ctx.fill();
+                drawEyes(x, y + bounce, w, h - bounce, 'green', 'black');
+                drawMouth(x, y + bounce, w, h - bounce);
+                // Whiskers
+                ctx.strokeStyle = 'black';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(x + 2, y + bounce + 13);
+                ctx.lineTo(x - 3, y + bounce + 12);
+                ctx.moveTo(x + 28, y + bounce + 13);
+                ctx.lineTo(x + 33, y + bounce + 12);
+                ctx.stroke();
+            },
+            alien: (x, y, w, h, frame) => {
+                const bounce = Math.sin(frame) * 2;
+                // Body (oval)
+                ctx.fillStyle = '#7fff00';
+                ctx.beginPath();
+                ctx.ellipse(x + w/2, y + h/2 + bounce, w/2, h/2.2, 0, 0, Math.PI * 2);
+                ctx.fill();
+                // Antenna
+                ctx.strokeStyle = '#7fff00';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(x + w/2 - 5, y + bounce);
+                ctx.lineTo(x + w/2 - 5, y + bounce - 5);
+                ctx.moveTo(x + w/2 + 5, y + bounce);
+                ctx.lineTo(x + w/2 + 5, y + bounce - 5);
+                ctx.stroke();
+                ctx.fillStyle = '#ff00ff';
+                ctx.beginPath();
+                ctx.arc(x + w/2 - 5, y + bounce - 5, 2, 0, Math.PI * 2);
+                ctx.arc(x + w/2 + 5, y + bounce - 5, 2, 0, Math.PI * 2);
+                ctx.fill();
+                // Large alien eyes
+                ctx.fillStyle = 'black';
+                ctx.beginPath();
+                ctx.ellipse(x + 10, y + bounce + 10, 4, 6, 0, 0, Math.PI * 2);
+                ctx.ellipse(x + 20, y + bounce + 10, 4, 6, 0, 0, Math.PI * 2);
+                ctx.fill();
+                // Tiny mouth
+                ctx.strokeStyle = 'black';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.arc(x + w/2, y + bounce + 18, 3, 0, Math.PI);
+                ctx.stroke();
+            },
+            fire: (x, y, w, h, frame) => {
+                const flicker = Math.sin(frame * 2) * 3;
+                // Flame layers
+                ctx.fillStyle = '#ff4500';
+                ctx.beginPath();
+                ctx.moveTo(x + w/2, y - 2 + flicker);
+                ctx.lineTo(x + w, y + h + flicker);
+                ctx.lineTo(x, y + h + flicker);
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = '#ff6347';
+                ctx.beginPath();
+                ctx.moveTo(x + w/2, y + 3 + flicker);
+                ctx.lineTo(x + w - 5, y + h + flicker);
+                ctx.lineTo(x + 5, y + h + flicker);
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = '#ffa500';
+                ctx.beginPath();
+                ctx.moveTo(x + w/2, y + 8 + flicker);
+                ctx.lineTo(x + w - 10, y + h + flicker);
+                ctx.lineTo(x + 10, y + h + flicker);
+                ctx.closePath();
+                ctx.fill();
+
+                // Eyes in the flame
+                ctx.fillStyle = 'yellow';
+                ctx.beginPath();
+                ctx.arc(x + 10, y + 12, 3, 0, Math.PI * 2);
+                ctx.arc(x + 20, y + 12, 3, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#ff4500';
+                ctx.beginPath();
+                ctx.arc(x + 10, y + 12, 1.5, 0, Math.PI * 2);
+                ctx.arc(x + 20, y + 12, 1.5, 0, Math.PI * 2);
+                ctx.fill();
             }
         };
 
@@ -2100,7 +2214,7 @@
 
         // Draw skin previews
         function drawSkinPreviews() {
-            const skins = ['purple', 'red', 'blue', 'green', 'gold', 'ninja', 'robot'];
+            const skins = ['purple', 'red', 'blue', 'green', 'gold', 'ninja', 'robot', 'cat', 'alien', 'fire'];
             skins.forEach((skin, index) => {
                 const previewCanvas = document.getElementById('skinPreview' + (index + 1));
                 if (!previewCanvas) return;
