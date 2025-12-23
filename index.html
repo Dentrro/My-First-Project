@@ -874,7 +874,7 @@
                 <div class="editor-tool" data-tool="coin">Coin</div>
                 <div class="editor-tool" data-tool="erase">Erase</div>
             </div>
-            <canvas id="editorCanvas" width="800" height="400"></canvas>
+            <canvas id="editorCanvas" width="800" height="600"></canvas>
             <button class="primary" onclick="saveCustomLevel()">Save & Get Code</button>
             <textarea id="levelCodeOutput" rows="3" placeholder="Your level code will appear here..." readonly></textarea>
             <button class="primary" onclick="testCustomLevel()">Test Level</button>
@@ -1591,7 +1591,13 @@
                 const totalCoins = levelData.coins.length;
 
                 if (collectedCoins === totalCoins) {
-                    nextLevel();
+                    if (game.customLevel) {
+                        // Custom level completed - just reset it
+                        alert('Custom level completed! 🎉');
+                        resetLevel();
+                    } else {
+                        nextLevel();
+                    }
                 } else {
                     // Push player back if they haven't collected all coins
                     player.x = canvas.width - player.width - 10;
@@ -1624,6 +1630,9 @@
             document.getElementById('startMenu').style.display = 'flex';
             game.paused = true;
             game.started = false;
+            // Clear custom level when returning to menu
+            game.customLevel = null;
+            currentLevelData = generateLevel(game.currentLevel);
             document.getElementById('settingsBtn').style.display = 'none';
             document.getElementById('helpBtn').style.display = 'none';
             document.getElementById('shopBtn').style.display = 'none';
@@ -1652,6 +1661,12 @@
             if (game.customLevel) {
                 currentLevelData = game.customLevel;
                 game.customLevel.coins.forEach(coin => coin.collected = false);
+                // Reset enemy positions and velocities
+                game.customLevel.enemies.forEach(enemy => {
+                    enemy.vx = 0;
+                    enemy.vy = 0;
+                    enemy.onGround = false;
+                });
             } else {
                 currentLevelData = generateLevel(game.currentLevel);
             }
@@ -1678,8 +1693,12 @@
 
         // Update UI
         function updateUI() {
-            document.getElementById('levelDisplay').textContent =
-                `Level: ${game.currentLevel} / 100`;
+            if (game.customLevel) {
+                document.getElementById('levelDisplay').textContent = 'Custom Level';
+            } else {
+                document.getElementById('levelDisplay').textContent =
+                    `Level: ${game.currentLevel} / 100`;
+            }
 
             const collectedCoins = currentLevelData.coins.filter(c => c.collected).length;
             const totalCoins = currentLevelData.coins.length;
@@ -1879,6 +1898,18 @@
             document.getElementById('modalOverlay').style.display = 'none';
             if (game.started) {
                 game.paused = false;
+                // Restore UI elements
+                document.getElementById('settingsBtn').style.display = 'flex';
+                document.getElementById('helpBtn').style.display = 'flex';
+                document.getElementById('shopBtn').style.display = 'block';
+                document.getElementById('editorBtn').style.display = 'block';
+                document.getElementById('levelCodeBtn').style.display = 'block';
+                document.getElementById('restartBtn').style.display = 'flex';
+                document.getElementById('menuBtn').style.display = 'flex';
+                document.getElementById('advancementsBtn').style.display = 'block';
+                document.getElementById('levelDisplay').style.display = 'block';
+                document.getElementById('coinDisplay').style.display = 'block';
+                document.getElementById('fpsDisplay').style.display = 'block';
             } else {
                 // Return to start menu if game hasn't started
                 document.getElementById('startMenu').style.display = 'flex';
@@ -2174,6 +2205,36 @@
             openModal('levelCodeModal');
         });
 
+        // Initialize enemy properties for custom levels
+        function initializeEnemies(levelData) {
+            levelData.enemies.forEach(enemy => {
+                if (!enemy.hasOwnProperty('vx')) {
+                    enemy.vx = 0;
+                    enemy.vy = 0;
+                    enemy.onGround = false;
+
+                    // Find the platform this enemy is on to set boundaries
+                    let enemyPlatform = null;
+                    levelData.platforms.forEach(platform => {
+                        if (enemy.x >= platform.x &&
+                            enemy.x + enemy.width <= platform.x + platform.width &&
+                            Math.abs(enemy.y + enemy.height - platform.y) < 50) {
+                            enemyPlatform = platform;
+                        }
+                    });
+
+                    if (enemyPlatform) {
+                        enemy.minX = enemyPlatform.x;
+                        enemy.maxX = enemyPlatform.x + enemyPlatform.width - enemy.width;
+                    } else {
+                        // If no platform found, constrain to a small area around spawn
+                        enemy.minX = enemy.x - 50;
+                        enemy.maxX = enemy.x + 50;
+                    }
+                }
+            });
+        }
+
         function loadLevelFromCode() {
             const code = document.getElementById('levelCodeInput').value.trim();
             if (!code) {
@@ -2183,6 +2244,7 @@
 
             try {
                 const levelData = JSON.parse(atob(code));
+                initializeEnemies(levelData);
                 game.customLevel = levelData;
                 currentLevelData = levelData;
                 game.playedCustom = true;
@@ -2370,6 +2432,7 @@
 
             try {
                 const levelData = JSON.parse(atob(code));
+                initializeEnemies(levelData);
                 game.customLevel = levelData;
                 currentLevelData = levelData;
                 resetLevel();
@@ -2387,6 +2450,18 @@
             document.getElementById('modalOverlay').style.display = 'none';
             if (game.started) {
                 game.paused = false;
+                // Restore UI elements
+                document.getElementById('settingsBtn').style.display = 'flex';
+                document.getElementById('helpBtn').style.display = 'flex';
+                document.getElementById('shopBtn').style.display = 'block';
+                document.getElementById('editorBtn').style.display = 'block';
+                document.getElementById('levelCodeBtn').style.display = 'block';
+                document.getElementById('restartBtn').style.display = 'flex';
+                document.getElementById('menuBtn').style.display = 'flex';
+                document.getElementById('advancementsBtn').style.display = 'block';
+                document.getElementById('levelDisplay').style.display = 'block';
+                document.getElementById('coinDisplay').style.display = 'block';
+                document.getElementById('fpsDisplay').style.display = 'block';
             }
         });
 
