@@ -1,0 +1,2227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Website</title>
+    <link rel="stylesheet" href="assets/extra.css">
+    <style>
+        /* HUD */
+        #hud {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            z-index: 60;
+            color: white;
+            font-weight: bold;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.6);
+        }
+        #hud > div {
+            background: rgba(0,0,0,0.35);
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div id="settingsGear">⚙️</div>
+    <div id="settingsPanel">
+        <label>Background color: <input type="color" id="bgColorPicker" value="#667eea"></label>
+        <button id="bgReset">Reset</button>
+    </div>
+        <div id="hud">
+            <div id="hudLevel">Level: 1</div>
+            <div id="hudLives">Lives: 3</div>
+            <div id="hudScore">Score: 0</div>
+        </div>
+
+    <div id="centerText">Click the button to see something funny!</div>
+    <button id="changeButton">Change Text</button>
+    <input type="text" id="textInput" placeholder="Type to change center text...">
+    <div id="levelControls">
+        <button id="prevLevel">◀ Prev</button>
+        <div id="levelLabel">Level 1</div>
+        <button id="nextLevel">Next ▶</button>
+        <button id="restartLevel">↺ Restart</button>
+        <button id="pauseButton">Pause</button>
+        <button id="fullscreenButton">⤢</button>
+    </div>
+    <canvas id="gameCanvas" width="400" height="300"></canvas>
+
+    <div id="musicPanel">
+        <select id="musicSelect">
+            <option value="">-- Select music --</option>
+            <option value="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3">Chill Loop 1</option>
+            <option value="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3">Chill Loop 2</option>
+            <option value="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3">Chill Loop 3</option>
+        </select>
+        <button id="musicPlay">Play</button>
+        <button id="musicPause">Pause</button>
+        <button id="musicMute">Mute</button>
+        <input id="musicVolume" type="range" min="0" max="1" step="0.01" value="0.5">
+        <audio id="bgAudio" crossorigin="anonymous"></audio>
+    </div>
+
+    <div id="touchControls">
+        <div id="touchLeft" class="touch-btn">◀</div>
+        <div id="touchJump" class="touch-btn">▲</div>
+        <div id="touchRight" class="touch-btn">▶</div>
+    </div>
+
+    <div id="gamepadStatus">Gamepad: none</div>
+
+    <div id="gameScreen">
+        <div id="gameTitle">Find the odd one out!</div>
+        <button id="leaveButton">Leave</button>
+        <div id="imageGrid"></div>
+    </div>
+
+    <script>
+        // Funny texts array
+        const funnyTexts = [
+            "Why did the JavaScript developer go broke? Because they used up all their cache!",
+            "I told my computer I needed a break... now it won't stop sending me Kit-Kats! 🍫",
+            "Why do programmers prefer dark mode? Because light attracts bugs! 🐛",
+            "How many programmers does it take to change a light bulb? None, that's a hardware problem!",
+            "I would tell you a UDP joke, but you might not get it...",
+            "There are 10 types of people: those who understand binary and those who don't!",
+            "Why did the hipster burn their tongue? They drank their coffee before it was cool! ☕",
+            "My code works! I have no idea why... 🤷",
+            "99 little bugs in the code, 99 bugs in the code... patch one out, compile again, 117 bugs in the code!",
+            "I'm not lazy, I'm just in energy-saving mode! 💤",
+            "ERROR 404: Funny joke not found... wait, is that the joke? 🤔",
+            "Why did the scarecrow win an award? Because he was outstanding in his field! 🌾",
+            "I asked the librarian if the library had books on paranoia. She whispered, 'They're right behind you.'",
+            "Parallel lines have so much in common. It’s a shame they’ll never meet.",
+            "A SQL query walks into a bar, walks up to two tables and asks: 'Can I join you?'",
+            "I told my wife she was drawing her eyebrows too high. She looked surprised.",
+            "I changed my password to 'incorrect' so whenever I forget it the computer will say 'Your password is incorrect.'",
+            "Why don't scientists trust atoms? Because they make up everything!",
+            "I ate a clock yesterday — it was very time-consuming.",
+            "I used to be addicted to soap, but I'm clean now."
+        ];
+
+        // Add many more funny texts
+        funnyTexts.push(
+            "I told my computer I needed a break — it started downloading a holiday package.",
+            "Why did the web developer walk out of the restaurant? The server couldn't respond.",
+            "If at first you don't succeed; call it version 1.0.",
+            "I told my code a joke. Now it's throwing exceptions.",
+            "Real programmers count from 0.",
+            "To understand recursion, you must first understand recursion.",
+            "There are only two hard things in Computer Science: cache invalidation, naming things, and off-by-one errors.",
+            "Why was the developer sad at work? He had too many unresolved promises.",
+            "A programmer's spouse tells them, 'Go to the store and get a gallon of milk. If they have eggs, get a dozen.' Programmer returns with 12 gallons of milk.",
+            "Old programmers never die; they just can't C anymore.",
+            "Why do Java developers wear glasses? Because they don't C#.",
+            "I would tell you a joke about HTTP, but you might not get a response.",
+            "Knock knock. Who's there? Null. Null who? Exactly.",
+            "I love pressing F5. It's so refreshing.",
+            "Why did the function return early? It had a break-up.",
+            "The programmer's diet: lots of cookies and cache.",
+            "I've got a really good UDP joke to tell you, but I'm not sure you'll get it.",
+            "Programming is like writing a book... except if you miss out a single comma on page 126 the whole thing makes no sense.",
+            "There are 2 hard things in programming: naming things, cache invalidation, and off-by-one e rrors (this joke is recursive).",
+            "Why did the constant break up with the variable? Because it didn't change.",
+            "I put my root password on a sticky note... it got sticky.",
+            "Why do programmers prefer nature? It has the best trees for binary searches.",
+            "My boss told me to have a good day, so I logged off.",
+            "I told my cat about JavaScript. Now it keeps knocking coffee off the table to check for NaN.",
+            "A programmer's favorite hangout place? Foo Bar.",
+            "Why did the keyboard break up with the computer? Too many CTRL issues.",
+            "I love long, romantic walks to the fridge for more snacks during debugging.",
+            "Why was the developer always calm? Because he had a lot of try/catch in his life.",
+            "I tried to start my car with JavaScript, but it only worked after transpiling to coffee."
+        );
+
+        let currentTextIndex = 0;
+
+        // Create pop sound using Web Audio API
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playPopSound() {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.frequency.value = 800;
+            oscillator.type = 'sine';
+
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.1);
+        }
+
+        // stomp sound (different tone)
+        function playStompSound() {
+            try {
+                const osc = audioContext.createOscillator();
+                const g = audioContext.createGain();
+                osc.type = 'square';
+                osc.frequency.value = 240;
+                osc.connect(g);
+                g.connect(audioContext.destination);
+                g.gain.setValueAtTime(0.35, audioContext.currentTime);
+                g.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.12);
+                osc.start(audioContext.currentTime);
+                osc.stop(audioContext.currentTime + 0.12);
+            } catch(e) {}
+        <script>
+    // Funny texts array
+    const funnyTexts = [
+        "Why did the JavaScript developer go broke? Because they used up all their cache!",
+        "I told my computer I needed a break... now it won't stop sending me Kit-Kats! 🍫",
+        "Why do programmers prefer dark mode? Because light attracts bugs! 🐛",
+        "How many programmers does it take to change a light bulb? None, that's a hardware problem!",
+        "I would tell you a UDP joke, but you might not get it...",
+        "There are 10 types of people: those who understand binary and those who don't!",
+        "Why did the hipster burn their tongue? They drank their coffee before it was cool! ☕",
+        "My code works! I have no idea why... 🤷",
+        "99 little bugs in the code, 99 bugs in the code... patch one out, compile again, 117 bugs in the code!",
+        "I'm not lazy, I'm just in energy-saving mode! 💤",
+        "ERROR 404: Funny joke not found... wait, is that the joke? 🤔",
+        "Why did the scarecrow win an award? Because he was outstanding in his field! 🌾",
+        "I asked the librarian if the library had books on paranoia. She whispered, 'They're right behind you.'",
+        "Parallel lines have so much in common. It’s a shame they’ll never meet.",
+        "A SQL query walks into a bar, walks up to two tables and asks: 'Can I join you?'",
+        "I told my wife she was drawing her eyebrows too high. She looked surprised.",
+        "I changed my password to 'incorrect' so whenever I forget it the computer will say 'Your password is incorrect.'",
+        "Why don't scientists trust atoms? Because they make up everything!",
+        "I ate a clock yesterday — it was very time-consuming.",
+        "I used to be addicted to soap, but I'm clean now."
+    ];
+
+    // Add many more funny texts
+    funnyTexts.push(
+        "I told my computer I needed a break — it started downloading a holiday package.",
+        "Why did the web developer walk out of the restaurant? The server couldn't respond.",
+        "If at first you don't succeed; call it version 1.0.",
+        "I told my code a joke. Now it's throwing exceptions.",
+        "Real programmers count from 0.",
+        "To understand recursion, you must first understand recursion.",
+        "There are only two hard things in Computer Science: cache invalidation, naming things, and off-by-one errors.",
+        "Why was the developer sad at work? He had too many unresolved promises.",
+        "A programmer's spouse tells them, 'Go to the store and get a gallon of milk. If they have eggs, get a dozen.' Programmer returns with 12 gallons of milk.",
+        "Old programmers never die; they just can't C anymore.",
+        "Why do Java developers wear glasses? Because they don't C#.",
+        "I would tell you a joke about HTTP, but you might not get a response.",
+        "Knock knock. Who's there? Null. Null who? Exactly.",
+        "I love pressing F5. It's so refreshing.",
+        "Why did the function return early? It had a break-up.",
+        "The programmer's diet: lots of cookies and cache.",
+        "I've got a really good UDP joke to tell you, but I'm not sure you'll get it.",
+        "Programming is like writing a book... except if you miss out a single comma on page 126 the whole thing makes no sense.",
+        "There are 2 hard things in programming: naming things, cache invalidation, and off-by-one errors (this joke is recursive).",
+        "Why did the constant break up with the variable? Because it didn't change.",
+        "I put my root password on a sticky note... it got sticky.",
+        "Why do programmers prefer nature? It has the best trees for binary searches.",
+        "My boss told me to have a good day, so I logged off.",
+        "I told my cat about JavaScript. Now it keeps knocking coffee off the table to check for NaN.",
+        "A programmer's favorite hangout place? Foo Bar.",
+        "Why did the keyboard break up with the computer? Too many CTRL issues.",
+        "I love long, romantic walks to the fridge for more snacks during debugging.",
+        "Why was the developer always calm? Because he had a lot of try/catch in his life.",
+        "I tried to start my car with JavaScript, but it only worked after transpiling to coffee."
+    );
+
+    let currentTextIndex = 0;
+
+    // Create pop sound using Web Audio API
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playPopSound() {
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        oscillator.frequency.value = 800;
+        oscillator.type = 'sine';
+
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.1);
+    }
+
+    // stomp sound (different tone)
+    function playStompSound() {
+        try {
+            const osc = audioContext.createOscillator();
+            const g = audioContext.createGain();
+            osc.type = 'square';
+            osc.frequency.value = 240;
+            osc.connect(g);
+            g.connect(audioContext.destination);
+            g.gain.setValueAtTime(0.35, audioContext.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.12);
+            osc.start(audioContext.currentTime);
+            osc.stop(audioContext.currentTime + 0.12);
+        } catch(e) {}
+    }
+
+    // Button functionality
+    const changeButton = document.getElementById('changeButton');
+    const centerText = document.getElementById('centerText');
+
+    changeButton.addEventListener('click', () => {
+        playPopSound();
+
+        changeButton.classList.add('clicked');
+        setTimeout(() => {
+            changeButton.classList.remove('clicked');
+        }, 200);
+
+        currentTextIndex = (currentTextIndex + 1) % funnyTexts.length;
+        centerText.textContent = funnyTexts[currentTextIndex];
+    });
+
+    // Text input functionality
+    const textInput = document.getElementById('textInput');
+    textInput.addEventListener('input', (e) => {
+        if (e.target.value.trim() !== '') {
+            centerText.textContent = e.target.value;
+        }
+    });
+
+    // Settings gear and background color picker
+    const settingsGear = document.getElementById('settingsGear');
+    const settingsPanel = document.getElementById('settingsPanel');
+    const bgColorPicker = document.getElementById('bgColorPicker');
+    const bgReset = document.getElementById('bgReset');
+
+    settingsGear.addEventListener('click', () => {
+        settingsPanel.classList.toggle('active');
+    });
+
+    bgColorPicker.addEventListener('input', (e) => {
+        document.body.style.background = e.target.value;
+    });
+
+    bgReset.addEventListener('click', () => {
+        document.body.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+        bgColorPicker.value = '#667eea';
+    });
+
+    // Music panel controls
+    const musicSelect = document.getElementById('musicSelect');
+    const bgAudio = document.getElementById('bgAudio');
+    const musicPlay = document.getElementById('musicPlay');
+    const musicPause = document.getElementById('musicPause');
+    const musicVolume = document.getElementById('musicVolume');
+
+    // initial music button states
+    musicPlay.disabled = true;
+    musicPause.disabled = true;
+    const musicMute = document.getElementById('musicMute');
+    let isMuted = false;
+
+    // preload all select options into a cache for quicker playback
+    const musicCache = new Map();
+    for (let i=0;i<musicSelect.options.length;i++) {
+        const opt = musicSelect.options[i];
+        if (opt.value) {
+            try { const a = new Audio(); a.crossOrigin = 'anonymous'; a.preload = 'auto'; a.src = opt.value; musicCache.set(opt.value, a); } catch(e) { console.warn('preload failed', opt.value, e); }
+        }
+    }
+
+    let currentMusicUrl = '';
+
+    function setMuted(state) {
+        isMuted = !!state;
+        bgAudio.muted = isMuted;
+        musicMute.textContent = isMuted ? 'Unmute' : 'Mute';
+    }
+
+    musicMute.addEventListener('click', () => setMuted(!isMuted));
+
+    musicSelect.addEventListener('change', () => {
+        const src = musicSelect.value;
+        if (src) {
+            // update bgAudio to selected track but do not autoplay until Play pressed
+            currentMusicUrl = src;
+            bgAudio.src = src;
+            bgAudio.load();
+            bgAudio.loop = true;
+            bgAudio.volume = parseFloat(musicVolume.value);
+            musicPlay.disabled = false;
+            musicPause.disabled = true;
+        }
+    });
+
+    async function playMusicUrl(url) {
+        if (!url) return;
+        if (currentMusicUrl !== url) {
+            currentMusicUrl = url;
+            bgAudio.src = url;
+            bgAudio.load();
+        }
+        try {
+            if (audioContext.state === 'suspended') await audioContext.resume();
+        } catch(e) {}
+        try {
+            await bgAudio.play();
+            musicPlay.disabled = true;
+            musicPause.disabled = false;
+        } catch(err) {
+            console.warn('music play failed', err);
+        }
+    }
+
+    musicPlay.addEventListener('click', async () => {
+        if (!currentMusicUrl) return;
+        await playMusicUrl(currentMusicUrl);
+    });
+
+    musicPause.addEventListener('click', () => {
+        bgAudio.pause();
+        musicPlay.disabled = false;
+        musicPause.disabled = true;
+    });
+
+    musicVolume.addEventListener('input', () => {
+        bgAudio.volume = parseFloat(musicVolume.value);
+    });
+
+    // Pause / Fullscreen / Responsive canvas scaling
+    let paused = false;
+    const pauseButton = document.getElementById('pauseButton');
+    const fullscreenButton = document.getElementById('fullscreenButton');
+
+    function togglePause() {
+        paused = !paused;
+        pauseButton.textContent = paused ? 'Resume' : 'Pause';
+    }
+
+    function toggleFullscreen() {
+        const el = document.documentElement;
+        if (!document.fullscreenElement) {
+            if (el.requestFullscreen) el.requestFullscreen();
+            else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+        } else {
+            if (document.exitFullscreen) document.exitFullscreen();
+            else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+        }
+    }
+
+    pauseButton.addEventListener('click', () => togglePause());
+    fullscreenButton.addEventListener('click', () => toggleFullscreen());
+
+    // keyboard shortcuts: P = pause, F = fullscreen
+    document.addEventListener('keydown', (e) => {
+        if (e.key.toLowerCase() === 'p') togglePause();
+        if (e.key.toLowerCase() === 'f') toggleFullscreen();
+    });
+
+    // Responsive canvas display size (scales the canvas visually while keeping resolution)
+    function setCanvasDisplaySize() {
+        // target max dimensions (portion of viewport)
+        const maxW = Math.max(200, Math.min(window.innerWidth * 0.45, 700));
+        const maxH = Math.max(150, Math.min(window.innerHeight * 0.6, 800));
+        const scale = Math.min(maxW / canvas.width, maxH / canvas.height);
+        canvas.style.width = Math.round(canvas.width * scale) + 'px';
+        canvas.style.height = Math.round(canvas.height * scale) + 'px';
+    }
+
+    window.addEventListener('resize', setCanvasDisplaySize);
+    // set initial size
+    setCanvasDisplaySize();
+
+    // HUD state
+    let lives = 3;
+    let score = 0;
+
+    function updateHUD() {
+        document.getElementById('hudLevel').textContent = `Level: ${currentLevel+1}`;
+        document.getElementById('hudLives').textContent = `Lives: ${lives}`;
+        document.getElementById('hudScore').textContent = `Score: ${score}`;
+    }
+
+    // Platformer Game
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const player = {
+        x: 50,
+        y: 200,
+        width: 30,
+        height: 30,
+        velocityX: 0,
+        velocityY: 0,
+        speed: 5,
+        jumpPower: 12,
+        gravity: 0.45,
+        isJumping: false,
+        isDucking: false
+        ,invulnerable: false
+        ,invulTimer: 0
+    };
+
+    // sprite hooks (optional): attempt to load sprites/player.png and sprites/enemy.png if present
+    window.assets = window.assets || {};
+    (function(){
+        const base = 'assets/';
+        const p = new Image(); p.src = base + 'player.png';
+        p.onload = () => { window.assets.playerImg = p; };
+        p.onerror = ()=>{ window.assets.playerImg = null; };
+        const e = new Image(); e.src = base + 'enemy.png';
+        e.onload = () => { window.assets.enemyImg = e; };
+        e.onerror = ()=>{ window.assets.enemyImg = null; };
+    })();
+
+    // Level system
+    let platforms = [];
+    let spikes = [];
+    let enemies = [];
+    let currentLevel = 0;
+
+    const levels = [
+        // Level 1 (starter)
+        {
+            platforms: [
+                { x: 0, y: 280, width: 400, height: 20 },
+                { x: 100, y: 220, width: 100, height: 15 },
+                { x: 250, y: 160, width: 100, height: 15 },
+                { x: 50, y: 100, width: 80, height: 15 }
+            ],
+            enemies: [],
+            spikes: [ { x: 200, y: 280-12, width: 20, height: 12 } ]
+        },
+        // Level 2 (more platforms + one moving enemy)
+        {
+            platforms: [
+                { x: 0, y: 280, width: 400, height: 20 },
+                { x: 40, y: 230, width: 80, height: 15 },
+                { x: 150, y: 190, width: 80, height: 15 },
+                { x: 270, y: 140, width: 100, height: 15 }
+            ],
+            enemies: [ { x: 150, y: 170, width: 24, height: 24, velX: 1.2, minX: 140, maxX: 230 } ],
+            spikes: [ { x: 110, y: 230-12, width: 20, height: 12 }, { x: 320, y: 280-12, width: 20, height: 12 } ]
+        },
+        // Level 3 (challenge)
+        {
+            platforms: [
+                { x: 0, y: 280, width: 400, height: 20 },
+                { x: 20, y: 240, width: 60, height: 15 },
+                { x: 110, y: 200, width: 60, height: 15 },
+                { x: 200, y: 160, width: 60, height: 15 },
+                { x: 300, y: 120, width: 80, height: 15 }
+            ],
+            enemies: [ { x: 60, y: 220, width: 20, height: 20, velX: 0.8, minX: 20, maxX: 100 }, { x: 240, y: 140, width: 20, height: 20, velX: 1.0, minX: 200, maxX: 300 } ],
+            spikes: [ { x: 180, y: 280-12, width: 20, height: 12 }, { x: 350, y: 280-12, width: 20, height: 12 } ]
+        },
+        // Level 4
+        {
+            platforms: [
+                { x: 0, y: 280, width: 400, height: 20 },
+                { x: 60, y: 240, width: 80, height: 15 },
+                { x: 170, y: 200, width: 80, height: 15 },
+                { x: 280, y: 160, width: 80, height: 15 }
+            ],
+            enemies: [ { x: 120, y: 180, width: 22, height: 22, velX: 1.0, minX: 100, maxX: 220 } ],
+            spikes: [ { x: 220, y: 280-12, width: 20, height: 12 } ]
+        },
+        // Level 5
+        {
+            platforms: [
+                { x: 0, y: 280, width: 400, height: 20 },
+                { x: 30, y: 240, width: 60, height: 15 },
+                { x: 120, y: 200, width: 60, height: 15 },
+                { x: 210, y: 160, width: 60, height: 15 },
+                { x: 300, y: 120, width: 80, height: 15 }
+            ],
+            enemies: [ { x: 40, y: 220, width: 18, height: 18, velX: 0.8, minX: 20, maxX: 100 } ],
+            spikes: [ { x: 150, y: 280-12, width: 20, height: 12 }, { x: 360, y: 280-12, width: 20, height: 12 } ]
+        },
+        // Level 6
+        {
+            platforms: [
+                { x: 0, y: 280, width: 400, height: 20 },
+                { x: 200, y: 240, width: 120, height: 15 },
+                { x: 60, y: 200, width: 90, height: 15 }
+            ],
+            enemies: [ { x: 220, y: 220, width: 24, height: 24, velX: 1.4, minX: 200, maxX: 320 } ],
+            spikes: [ { x: 100, y: 280-12, width: 20, height: 12 } ]
+        },
+        // Level 7
+        {
+            platforms: [
+                { x: 0, y: 280, width: 400, height: 20 },
+                { x: 80, y: 230, width: 80, height: 15 },
+                { x: 220, y: 190, width: 80, height: 15 }
+            ],
+            enemies: [ { x: 260, y: 170, width: 20, height: 20, velX: 1.2, minX: 200, maxX: 320 }, { x: 90, y: 210, width: 18, height: 18, velX: 0.9, minX: 80, maxX: 160 } ],
+            spikes: [ { x: 10, y: 280-12, width: 20, height: 12 }, { x: 360, y: 280-12, width: 20, height: 12 } ]
+        },
+        // Level 8
+        {
+            platforms: [ { x: 0, y: 280, width: 400, height: 20 }, { x: 140, y: 230, width: 100, height: 15 }, { x: 320, y: 180, width: 60, height: 15 } ],
+            enemies: [ { x: 150, y: 210, width: 22, height: 22, velX: 1.0, minX: 140, maxX: 240 } ],
+            spikes: [ { x: 60, y: 280-12, width: 20, height: 12 }, { x: 200, y: 280-12, width: 20, height: 12 } ]
+        },
+        // Level 9
+        {
+            platforms: [ { x: 0, y: 280, width: 400, height: 20 }, { x: 50, y: 240, width: 60, height: 15 }, { x: 120, y: 200, width: 60, height: 15 }, { x: 190, y: 160, width: 60, height: 15 }, { x: 260, y: 120, width: 60, height: 15 } ],
+            enemies: [ { x: 70, y: 220, width: 18, height: 18, velX: 0.8, minX: 50, maxX: 120 }, { x: 210, y: 140, width: 20, height: 20, velX: 1.2, minX: 190, maxX: 280 } ],
+            spikes: [ { x: 340, y: 280-12, width: 20, height: 12 } ]
+        }
+    ];
+
+    // Procedurally generate additional levels until we have at least 50
+    (function expandLevels(targetCount){
+        const seed = levels.length;
+        while (levels.length < targetCount) {
+            const idx = levels.length;
+            // generate a few platforms, spaced progressively
+            const baseY = 280;
+            const platCount = 3 + (idx % 4); // 3-6 platforms
+            const p = [];
+            p.push({ x: 0, y: baseY, width: 400, height: 20 });
+
+            // ensure a safe left-side platform so spawn isn't impossible
+            const leftPlat = {
+                x: 20 + ((idx * 7) % 20),
+                y: Math.max(80, baseY - 40 - ((idx * 3) % 30)),
+                width: 70 + ((idx * 11) % 40),
+                height: 15
+            };
+            p.push(leftPlat);
+
+            for (let k=0;k<platCount;k++) {
+                const w = 60 + ((idx * 13 + k * 7) % 100);
+                const x = (40 + (k * 90) + (idx * 17) + (k * 13)) % 320;
+                const y = baseY - 40 - (k * 30) - ((idx * 3 + k*5) % 50);
+                p.push({ x: x, y: Math.max(60, y), width: Math.min(120, w), height: 15 });
+            }
+
+            // spawn some enemies on random platforms
+            const es = [];
+            for (let k=0;k<Math.min(3, Math.floor((idx/10)+1)); k++) {
+                const plat = p[1 + (k % (p.length-1))];
+                const ex = Math.max(plat.x + 8, Math.min(plat.x + plat.width - 24, plat.x + 10 + (k*20) ));
+                const ey = plat.y - 20;
+                es.push({ x: ex, y: ey, width: 18 + (k%3), height: 18, velX: 0.7 + ((idx+k)%3)*0.3, minX: plat.x + 4, maxX: plat.x + plat.width - 4 });
+            }
+
+            // some spikes on ground
+            const ss = [];
+            for (let k=0;k<Math.min(3, 1 + (idx%3)); k++) {
+                const sx = (40 + k*120 + (idx*11)) % 360;
+                ss.push({ x: sx, y: baseY - 12, width: 20, height: 12 });
+            }
+
+            levels.push({ platforms: p, enemies: es, spikes: ss });
+        }
+    })(50);
+
+    // Replace Level 10 (index 9) with a custom, handcrafted challenge
+    if (levels.length > 9) {
+        levels[9] = {
+            platforms: [
+                { x: 20, y: 220, width: 100, height: 15 },
+                { x: 150, y: 180, width: 80, height: 15 },
+                { x: 260, y: 140, width: 100, height: 15 },
+                { x: 320, y: 90, width: 60, height: 15 }
+            ],
+            enemies: [
+                { x: 60, y: 200, width: 20, height: 20, velX: 1.1, minX: 30, maxX: 120 },
+                { x: 200, y: 160, width: 18, height: 18, velX: 0.9, minX: 150, maxX: 230 }
+            ],
+            spikes: [
+                { x: 120, y: 280-12, width: 20, height: 12 },
+                { x: 340, y: 280-12, width: 20, height: 12 }
+            ]
+        };
+    }
+
+    // Remove first platform in Level 24 (index 23) if it exists
+    if (levels.length > 23 && Array.isArray(levels[23].platforms) && levels[23].platforms.length > 0) {
+        levels[23].platforms = levels[23].platforms.slice(1);
+    }
+    // Remove first platform in Level 30 (index 29) if it exists
+    if (levels.length > 29 && Array.isArray(levels[29].platforms) && levels[29].platforms.length > 0) {
+        levels[29].platforms = levels[29].platforms.slice(1);
+    }
+    // Remove first platform in Level 39 (index 38) if it exists
+    if (levels.length > 38 && Array.isArray(levels[38].platforms) && levels[38].platforms.length > 0) {
+        levels[38].platforms = levels[38].platforms.slice(1);
+    }
+    // Remove first platform in Level 44 (index 43) if it exists
+    if (levels.length > 43 && Array.isArray(levels[43].platforms) && levels[43].platforms.length > 0) {
+        levels[43].platforms = levels[43].platforms.slice(1);
+    }
+    // Remove first platform in Level 48 (index 47) if it exists
+    if (levels.length > 47 && Array.isArray(levels[47].platforms) && levels[47].platforms.length > 0) {
+        levels[47].platforms = levels[47].platforms.slice(1);
+    }
+    // Remove first platform in Level 50 (index 49) if it exists
+    if (levels.length > 49 && Array.isArray(levels[49].platforms) && levels[49].platforms.length > 0) {
+        levels[49].platforms = levels[49].platforms.slice(1);
+    }
+
+    function loadLevel(i) {
+        currentLevel = ((i % levels.length) + levels.length) % levels.length;
+        platforms = JSON.parse(JSON.stringify(levels[currentLevel].platforms));
+        spikes = JSON.parse(JSON.stringify(levels[currentLevel].spikes || []));
+        enemies = JSON.parse(JSON.stringify(levels[currentLevel].enemies || []));
+        // initialize enemy physics and remember starts
+        enemies.forEach(en => { en.velocityY = 0; en.startX = en.x; en.startY = en.y; });
+
+        // choose a safe spawn point: prefer top of a platform that doesn't overlap hazards
+        function spawnSafe() {
+            // helper to test overlap
+            const testBoxOverlap = (bx, by, bw, bh) => {
+                const a = { x: bx, y: by, width: bw, height: bh };
+                for (let s of spikes) {
+                    const b = { x: s.x, y: s.y, width: s.width, height: s.height };
+                    if (rectsOverlap(a,b)) return true;
+                }
+                for (let e of enemies) {
+                    const b = { x: e.x, y: e.y, width: e.width, height: e.height };
+                    if (rectsOverlap(a,b)) return true;
+                }
+                return false;
+            };
+
+            // try each platform top as spawn
+            for (let p of platforms) {
+                const spawnX = Math.max(2, Math.min(p.x + 10, p.x + p.width - player.width - 2));
+                const spawnY = p.y - player.height - 1;
+                if (!testBoxOverlap(spawnX, spawnY, player.width, player.height)) {
+                    return { x: spawnX, y: spawnY };
+                }
+            }
+
+            // try a few ground positions across the canvas
+            for (let sx=10; sx < canvas.width - player.width - 10; sx += 40) {
+                const sy = canvas.height - player.height - 0;
+                if (!testBoxOverlap(sx, sy, player.width, player.height)) return { x: sx, y: sy };
+            }
+
+            // fallback
+            return { x: 50, y: 200 };
+        }
+
+        const spawn = spawnSafe();
+        player.x = spawn.x; player.y = spawn.y; player.velocityX = 0; player.velocityY = 0; player.isJumping = false;
+        // clear hazards in a circle around the player's spawn center to prevent softlock
+        const spawnCenterX = player.x + player.width / 2;
+        const spawnCenterY = player.y + player.height / 2;
+        clearSpawnArea(spawnCenterX, spawnCenterY, 64);
+        document.getElementById('levelLabel').textContent = `Level ${currentLevel+1}`;
+        updateHUD();
+        // per-level music: pick a track by simple mapping (level index modulo available tracks)
+        const options = Array.from(musicSelect.options).map(o=>o.value).filter(Boolean);
+        if (options.length > 0) {
+            const pick = options[currentLevel % options.length];
+            // auto-play per-level music if not muted
+            currentMusicUrl = pick;
+            bgAudio.src = pick;
+            bgAudio.loop = true;
+            bgAudio.volume = parseFloat(musicVolume.value);
+            if (!isMuted && !paused) {
+                playMusicUrl(pick).catch(()=>{});
+            }
+        }
+    }
+
+    loadLevel(0);
+
+    const keys = {};
+
+    document.addEventListener('keydown', (e) => {
+        keys[e.key.toLowerCase()] = true;
+    });
+
+    document.addEventListener('keyup', (e) => {
+        keys[e.key.toLowerCase()] = false;
+    });
+
+    // Level control buttons
+    document.getElementById('nextLevel').addEventListener('click', () => loadLevel(currentLevel+1));
+    document.getElementById('prevLevel').addEventListener('click', () => loadLevel(currentLevel-1));
+    document.getElementById('restartLevel').addEventListener('click', () => loadLevel(currentLevel));
+
+    // Touch controls wiring
+    const touchLeft = document.getElementById('touchLeft');
+    const touchRight = document.getElementById('touchRight');
+    const touchJump = document.getElementById('touchJump');
+
+    function bindTouch(element, downHandler, upHandler) {
+        element.addEventListener('touchstart', (e) => { e.preventDefault(); downHandler(); }, { passive: false });
+        element.addEventListener('mousedown', (e) => { e.preventDefault(); downHandler(); });
+        const end = (e) => { e.preventDefault(); upHandler(); };
+        element.addEventListener('touchend', end);
+        element.addEventListener('touchcancel', end);
+        element.addEventListener('mouseup', end);
+        element.addEventListener('mouseleave', end);
+    }
+
+    bindTouch(touchLeft, () => { keys['arrowleft'] = true; }, () => { keys['arrowleft'] = false; });
+    bindTouch(touchRight, () => { keys['arrowright'] = true; }, () => { keys['arrowright'] = false; });
+    bindTouch(touchJump, () => { keys['arrowup'] = true; setTimeout(()=>keys['arrowup']=false, 200); }, () => { keys['arrowup'] = false; });
+
+    // Gamepad support
+    let gamepadIndex = null;
+    const gpStatus = document.getElementById('gamepadStatus');
+
+    window.addEventListener('gamepadconnected', (e) => {
+        gamepadIndex = e.gamepad.index;
+        gpStatus.textContent = `Gamepad: ${e.gamepad.id}`;
+    });
+    window.addEventListener('gamepaddisconnected', (e) => {
+        if (gamepadIndex === e.gamepad.index) gamepadIndex = null;
+        gpStatus.textContent = 'Gamepad: none';
+    });
+
+    function pollGamepad() {
+        if (gamepadIndex === null) return;
+        const gp = navigator.getGamepads && navigator.getGamepads()[gamepadIndex];
+        if (!gp) return;
+        // axis 0 = left stick horizontal; threshold deadzone
+        const ax = gp.axes[0] || 0;
+        const dead = 0.3;
+        if (ax < -dead) { keys['arrowleft'] = true; keys['arrowright'] = false; }
+        else if (ax > dead) { keys['arrowright'] = true; keys['arrowleft'] = false; }
+        else { keys['arrowleft'] = false; keys['arrowright'] = false; }
+
+        // button 0 (A / bottom) for jump
+        const jumpPressed = gp.buttons[0] && gp.buttons[0].pressed;
+        if (jumpPressed) {
+            if (!keys['_gpjump']) {
+                keys['_gpjump'] = true;
+                keys['arrowup'] = true;
+                setTimeout(()=>{ keys['arrowup'] = false; }, 180);
+            }
+        } else {
+            keys['_gpjump'] = false;
+        }
+    }
+
+    function drawPlayer() {
+        const drawHeight = player.isDucking ? player.height * 0.6 : player.height;
+        const drawY = player.isDucking ? player.y + (player.height * 0.4) : player.y;
+
+        // Draw purple square body (flash when invulnerable)
+        if (player.invulnerable && Math.floor(player.invulTimer * 10) % 2 === 0) {
+            ctx.fillStyle = '#ffd86b';
+        } else {
+            ctx.fillStyle = '#9b59b6';
+        }
+        ctx.fillRect(player.x, drawY, player.width, drawHeight);
+
+        // Draw cute eyes
+        const eyeY = drawY + drawHeight * 0.3;
+        const eyeSize = 5;
+        const eyeSpacing = 12;
+
+        // Left eye
+        ctx.fillStyle = 'white';
+        ctx.beginPath();
+        ctx.arc(player.x + player.width * 0.3, eyeY, eyeSize, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = 'black';
+        ctx.beginPath();
+        ctx.arc(player.x + player.width * 0.3, eyeY, eyeSize * 0.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Right eye
+        ctx.fillStyle = 'white';
+        ctx.beginPath();
+        ctx.arc(player.x + player.width * 0.7, eyeY, eyeSize, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = 'black';
+        ctx.beginPath();
+        ctx.arc(player.x + player.width * 0.7, eyeY, eyeSize * 0.5, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    function drawPlatforms() {
+        ctx.fillStyle = '#34495e';
+        platforms.forEach(platform => {
+            ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
+
+            // Add platform outline
+            ctx.strokeStyle = '#7f8c8d';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(platform.x, platform.y, platform.width, platform.height);
+        });
+        // Draw spikes
+        drawSpikes();
+        // Draw enemies
+        drawEnemies();
+    }
+
+    function drawSpikes() {
+        spikes.forEach(s => {
+            const x = s.x, y = s.y, w = s.width, h = s.height;
+            ctx.fillStyle = '#e74c3c';
+            ctx.beginPath();
+            ctx.moveTo(x, y+h);
+            ctx.lineTo(x + w/2, y);
+            ctx.lineTo(x + w, y+h);
+            ctx.closePath();
+            ctx.fill();
+        });
+    }
+
+    // Draw background per level to make each level a bit more unique
+    function drawBackground(levelIdx) {
+        // sky gradient varies by level
+        const g = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        if ((levelIdx % 4) === 0) {
+            g.addColorStop(0, '#a8edea');
+            g.addColorStop(1, '#fed6e3');
+        } else if ((levelIdx % 4) === 1) {
+            g.addColorStop(0, '#89f7fe');
+            g.addColorStop(1, '#66a6ff');
+        } else if ((levelIdx % 4) === 2) {
+            g.addColorStop(0, '#f6d365');
+            g.addColorStop(1, '#fda085');
+        } else {
+            g.addColorStop(0, '#d4fc79');
+            g.addColorStop(1, '#96e6a1');
+        }
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // draw simple layered mountains whose shapes depend on level index
+        const mx = (levelIdx * 23) % 200;
+        for (let m = 0; m < 3; m++) {
+            const offset = m * 40 + (mx * (m+1)) % 60;
+            const peakX = 80 + offset;
+            const peakY = 120 - m*10 - ((levelIdx*7) % 30);
+            ctx.beginPath();
+            ctx.moveTo(-40 + m*30, canvas.height - 40 - m*10);
+            ctx.lineTo(peakX, peakY);
+            ctx.lineTo(canvas.width + 40, canvas.height - 40 - m*10);
+            ctx.closePath();
+            const shade = 0.1 + m*0.12 + ((levelIdx % 3) * 0.03);
+            ctx.fillStyle = `rgba(${100 + m*30}, ${120 + m*10}, ${140 + m*20}, ${0.6 - shade})`;
+            ctx.fill();
+        }
+
+        // draw a few stylized clouds that move slightly per level
+        ctx.fillStyle = 'rgba(255,255,255,0.85)';
+        const cloudCount = 2 + (levelIdx % 3);
+        for (let i=0;i<cloudCount;i++) {
+            const cx = 40 + ((levelIdx * 37 + i*90) % (canvas.width-80));
+            const cy = 40 + ((i*25 + (levelIdx*13)) % 80);
+            ctx.beginPath();
+            ctx.ellipse(cx, cy, 28, 14, 0, 0, Math.PI*2);
+            ctx.ellipse(cx+20, cy+4, 22, 12, 0, 0, Math.PI*2);
+            ctx.ellipse(cx-20, cy+6, 18, 10, 0, 0, Math.PI*2);
+            ctx.fill();
+        }
+    }
+
+    // helper: rectangle-circle intersection test
+    function rectCircleIntersect(rx, ry, rw, rh, cx, cy, r) {
+        // find closest point to circle center within rectangle
+        const closestX = Math.max(rx, Math.min(cx, rx + rw));
+        const closestY = Math.max(ry, Math.min(cy, ry + rh));
+        const dx = cx - closestX;
+        const dy = cy - closestY;
+        return (dx*dx + dy*dy) <= (r*r);
+    }
+
+    // Clear hazards (spikes/enemies) within a circular radius around spawn center
+    function clearSpawnArea(cx, cy, radius) {
+        spikes = spikes.filter(s => {
+            return !rectCircleIntersect(s.x, s.y, s.width, s.height, cx, cy, radius);
+        });
+        enemies = enemies.filter(e => {
+            // use enemy rectangle for test
+            return !rectCircleIntersect(e.x, e.y, e.width, e.height, cx, cy, radius);
+        });
+    }
+
+    function drawEnemies() {
+        enemies.forEach(en => {
+            // if dead, draw faded body and let physics handle falling
+            if (en.dead) {
+                ctx.fillStyle = 'rgba(150,150,150,0.7)';
+                ctx.fillRect(en.x, en.y, en.width, en.height);
+                ctx.strokeStyle = 'rgba(120,120,120,0.6)';
+                ctx.strokeRect(en.x, en.y, en.width, en.height);
+                return;
+            }
+
+            // alive body
+            ctx.fillStyle = '#e67e22';
+            ctx.fillRect(en.x, en.y, en.width, en.height);
+            ctx.strokeStyle = '#c0392b';
+            ctx.strokeRect(en.x, en.y, en.width, en.height);
+
+            // eyes
+            const eyeRadius = Math.max(2, Math.min(6, en.width * 0.18));
+            const eyeY = en.y + en.height * 0.3;
+            const leftEyeX = en.x + en.width * 0.28;
+            const rightEyeX = en.x + en.width * 0.72;
+
+            // pupils look toward player
+            const playerCenterX = player.x + player.width * 0.5;
+            const pupOffset = Math.max(-2, Math.min(2, (playerCenterX - (en.x + en.width/2)) / 20));
+
+            ctx.fillStyle = 'white';
+            ctx.beginPath(); ctx.arc(leftEyeX, eyeY, eyeRadius, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(rightEyeX, eyeY, eyeRadius, 0, Math.PI * 2); ctx.fill();
+
+            ctx.fillStyle = 'black';
+            const pupilRadius = Math.max(1, eyeRadius * 0.5);
+            ctx.beginPath(); ctx.arc(leftEyeX + pupOffset, eyeY, pupilRadius, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(rightEyeX + pupOffset, eyeY, pupilRadius, 0, Math.PI * 2); ctx.fill();
+        });
+    }
+
+    function updateEnemies() {
+        enemies.forEach(en => {
+            // initialize helper properties
+            if (typeof en.state === 'undefined') en.state = 'patrol';
+            if (typeof en.respawnTimer === 'undefined') en.respawnTimer = 0;
+
+            // if dead, let it fall and schedule respawn
+            if (en.dead) {
+                if (typeof en.velocityY !== 'number') en.velocityY = 0;
+                en.velocityY += player.gravity;
+                en.y += en.velocityY;
+                en.respawnTimer -= 1/60;
+                if (en.respawnTimer <= 0 && en.y > canvas.height + 20) {
+                    // respawn at start
+                    en.x = (typeof en.startX === 'number') ? en.startX : en.x;
+                    en.y = (typeof en.startY === 'number') ? en.startY : (canvas.height - en.height);
+                    en.velocityY = 0;
+                    en.dead = false;
+                    en.respawnTimer = 0;
+                }
+                return;
+            }
+
+            // chase AI: if player is relatively close, move toward player
+            const enCenterX = en.x + en.width/2;
+            const playerCenterX = player.x + player.width/2;
+            const dx = playerCenterX - enCenterX;
+            const dy = (player.y + player.height/2) - (en.y + en.height/2);
+            const dist = Math.hypot(dx, dy);
+            const CHASE_DIST = 120;
+            const CHASE_SPEED = 1.4;
+
+            if (dist < CHASE_DIST && Math.abs(dy) < 40) {
+                // chase player horizontally
+                const sign = dx > 0 ? 1 : -1;
+                en.x += sign * CHASE_SPEED;
+            } else if (typeof en.velX === 'number') {
+                // patrol behavior
+                en.x += en.velX;
+                if (en.x < en.minX) { en.x = en.minX; en.velX *= -1; }
+                if (en.x + en.width > en.maxX) { en.x = en.maxX - en.width; en.velX *= -1; }
+            }
+
+            // vertical physics for enemies (gravity + platform collision)
+            if (typeof en.velocityY !== 'number') en.velocityY = 0;
+            en.velocityY += player.gravity; // reuse player gravity
+            let nextY = en.y + en.velocityY;
+
+            // try to land on any platform
+            for (let i=0;i<platforms.length;i++) {
+                const plat = platforms[i];
+                if (en.x + en.width > plat.x && en.x < plat.x + plat.width) {
+                    if (en.y + en.height <= plat.y && nextY + en.height >= plat.y) {
+                        // land on platform
+                        nextY = plat.y - en.height;
+                        en.velocityY = 0;
+                        break;
+                    }
+                }
+            }
+
+            en.y = nextY;
+
+            // if enemy falls beyond canvas, set a respawn timer so it doesn't immediately reappear
+            if (en.y > canvas.height + 40) {
+                en.respawnTimer = 1.2; // seconds until allowed to respawn
+                en.velocityY = 0;
+            }
+        });
+    }
+
+    function rectsOverlap(a, b) {
+        return !(a.x + a.width <= b.x || a.x >= b.x + b.width || a.y + a.height <= b.y || a.y >= b.y + b.height);
+    }
+
+    function playerHit() {
+        // reduce lives and optionally apply temporary invulnerability / knockback
+        // caller may set player.invulnerable manually; here we just decrement lives and update HUD
+        lives = Math.max(0, lives - 1);
+        updateHUD();
+        if (lives <= 0) {
+            setTimeout(() => {
+                alert('Game over! Restarting.');
+                lives = 3;
+                score = 0;
+                updateHUD();
+                loadLevel(0);
+            }, 50);
+        } else {
+            // give brief invulnerability so player can recover from knockback
+            player.invulnerable = true;
+            player.invulTimer = 1.5;
+        }
+    }
+
+    function checkPlayerHazards() {
+        const pBox = { x: player.x, y: player.y, width: player.width, height: player.height };
+        // spikes
+        for (let i=0;i<spikes.length;i++) {
+            const s = spikes[i];
+            const sBox = { x: s.x, y: s.y, width: s.width, height: s.height };
+            if (rectsOverlap(pBox, sBox)) {
+                // spikes are instant-death/hurt: respawn current level with reduced lives
+                playerHit();
+                // reload level after short delay to show effect
+                setTimeout(() => loadLevel(currentLevel), 200);
+                return;
+            }
+        }
+        // enemies
+        for (let i=0;i<enemies.length;i++) {
+            const e = enemies[i];
+            if (e.dead) continue;
+            const eBox = { x: e.x, y: e.y, width: e.width, height: e.height };
+            if (rectsOverlap(pBox, eBox)) {
+                // stomp if player is falling and hits top of enemy
+                const playerFeetPrev = player.y + player.height - player.velocityY;
+                if (player.velocityY > 0 && playerFeetPrev <= e.y + 6) {
+                    // stomp enemy
+                    score += 50;
+                    updateHUD();
+                    // bounce player a bit
+                    player.velocityY = -player.jumpPower * 0.6;
+                    player.isJumping = true;
+                    // mark enemy dead and give it an upward knock
+                        e.dead = true;
+                        e.velX = 0;
+                        e.velocityY = -6;
+                        e.respawnTimer = 1.2;
+                        playStompSound();
+                } else {
+                    // normal hit from side/top
+                    if (!player.invulnerable) {
+                        // apply knockback away from enemy
+                        const dir = (player.x + player.width/2) < (e.x + e.width/2) ? -1 : 1;
+                        player.velocityX = -dir * 6;
+                        player.velocityY = -6;
+                        player.invulnerable = true;
+                        player.invulTimer = 1.5;
+                        playerHit();
+                    }
+                }
+                return;
+            }
+        }
+    }
+
+    function updatePlayer() {
+        // Handle ducking
+        if (keys['s'] || keys['arrowdown']) {
+            player.isDucking = true;
+        } else {
+            player.isDucking = false;
+        }
+
+        // Horizontal movement: respect existing velocity (for knockback), apply direct input or friction
+        const inputLeft = keys['a'] || keys['arrowleft'];
+        const inputRight = keys['d'] || keys['arrowright'];
+        if (inputLeft && !inputRight) {
+            player.velocityX = -player.speed;
+        } else if (inputRight && !inputLeft) {
+            player.velocityX = player.speed;
+        } else {
+            // no horizontal input: apply friction so knockback decays naturally
+            player.velocityX *= 0.82;
+            if (Math.abs(player.velocityX) < 0.08) player.velocityX = 0;
+        }
+
+        // Jumping
+        if ((keys['w'] || keys['arrowup']) && !player.isJumping) {
+            player.velocityY = -player.jumpPower;
+            player.isJumping = true;
+        }
+
+        // Apply gravity
+        player.velocityY += player.gravity;
+        // Compute next position and resolve collisions axis-by-axis
+        // Horizontal move
+        let nextX = player.x + player.velocityX;
+        if (nextX < 0) nextX = 0;
+        if (nextX + player.width > canvas.width) nextX = canvas.width - player.width;
+
+        // Check horizontal collisions with platforms
+        for (let i=0;i<platforms.length;i++) {
+            const plat = platforms[i];
+            const playerBox = { x: nextX, y: player.y, width: player.width, height: player.height };
+            const platBox = { x: plat.x, y: plat.y, width: plat.width, height: plat.height };
+            if (rectsOverlap(playerBox, platBox)) {
+                // moving right
+                if (player.velocityX > 0) {
+                    nextX = plat.x - player.width;
+                } else if (player.velocityX < 0) {
+                    nextX = plat.x + plat.width;
+                }
+                player.velocityX = 0;
+            }
+        }
+
+        player.x = nextX;
+
+        // If player reaches the right edge, progress to next level and award score
+        if (player.x + player.width >= canvas.width) {
+            score += 100;
+            updateHUD();
+            loadLevel(currentLevel + 1);
+            return;
+        }
+
+        // Vertical move
+        let nextY = player.y + player.velocityY;
+
+        // Check vertical collisions with platforms
+        for (let i=0;i<platforms.length;i++) {
+            const plat = platforms[i];
+            const playerBox = { x: player.x, y: nextY, width: player.width, height: player.height };
+            const platBox = { x: plat.x, y: plat.y, width: plat.width, height: plat.height };
+            if (rectsOverlap(playerBox, platBox)) {
+                // landing on top
+                if (player.y + player.height <= plat.y) {
+                    nextY = plat.y - player.height;
+                    player.velocityY = 0;
+                    player.isJumping = false;
+                } else if (player.y >= plat.y + plat.height) {
+                    // hitting head from below
+                    nextY = plat.y + plat.height;
+                    player.velocityY = 0.5; // small downward push
+                }
+            }
+        }
+
+        player.y = nextY;
+
+        // Floor boundary
+        if (player.y + player.height > canvas.height) {
+            player.y = canvas.height - player.height;
+            player.velocityY = 0;
+            player.isJumping = false;
+        }
+
+        // If fallen far below, reset
+        if (player.y > canvas.height + 200) {
+            loadLevel(currentLevel);
+        }
+
+        // invulnerability timer decrement
+        if (player.invulnerable) {
+            player.invulTimer -= 1/60;
+            if (player.invulTimer <= 0) {
+                player.invulnerable = false;
+                player.invulTimer = 0;
+            }
+        }
+
+        // Update enemies and check hazards
+        updateEnemies();
+        checkPlayerHazards();
+    }
+
+    // Ensure audio context resumes on first user gesture so pop sounds work
+    function ensureAudioContext() {
+        if (audioContext.state === 'suspended') {
+            audioContext.resume().catch(() => {});
+        }
+    }
+
+    document.addEventListener('click', ensureAudioContext, { once: true });
+
+    function gameLoop() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // draw level-specific background first
+        drawBackground(currentLevel);
+
+        drawPlatforms();
+        // poll gamepad each frame to update `keys`
+        try { pollGamepad(); } catch(e) {}
+
+        if (!paused) {
+            updatePlayer();
+            drawPlayer();
+        } else {
+            // still draw player and enemies when paused so user sees state
+            drawPlayer();
+            // overlay pause
+            ctx.fillStyle = 'rgba(0,0,0,0.45)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'white';
+            ctx.font = '22px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('PAUSED', canvas.width / 2, canvas.height / 2 - 8);
+            ctx.font = '14px Arial';
+            ctx.fillText('Press P to resume', canvas.width / 2, canvas.height / 2 + 18);
+        }
+
+        requestAnimationFrame(gameLoop);
+    }
+
+    gameLoop();
+        </script>
+            ctx.fillRect(player.x, drawY, player.width, drawHeight);
+
+            // Draw cute eyes
+            const eyeY = drawY + drawHeight * 0.3;
+            const eyeSize = 5;
+            const eyeSpacing = 12;
+
+            // Left eye
+            ctx.fillStyle = 'white';
+            ctx.beginPath();
+            ctx.arc(player.x + player.width * 0.3, eyeY, eyeSize, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = 'black';
+            ctx.beginPath();
+            ctx.arc(player.x + player.width * 0.3, eyeY, eyeSize * 0.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Right eye
+            ctx.fillStyle = 'white';
+            ctx.beginPath();
+            ctx.arc(player.x + player.width * 0.7, eyeY, eyeSize, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = 'black';
+            ctx.beginPath();
+            ctx.arc(player.x + player.width * 0.7, eyeY, eyeSize * 0.5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function drawPlatforms() {
+            ctx.fillStyle = '#34495e';
+            platforms.forEach(platform => {
+                ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
+
+                // Add platform outline
+                ctx.strokeStyle = '#7f8c8d';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(platform.x, platform.y, platform.width, platform.height);
+            });
+            // Draw spikes
+            drawSpikes();
+            // Draw enemies
+            drawEnemies();
+        }
+
+        function drawSpikes() {
+            spikes.forEach(s => {
+                const x = s.x, y = s.y, w = s.width, h = s.height;
+                ctx.fillStyle = '#e74c3c';
+                ctx.beginPath();
+                ctx.moveTo(x, y+h);
+                ctx.lineTo(x + w/2, y);
+                ctx.lineTo(x + w, y+h);
+                ctx.closePath();
+                ctx.fill();
+            });
+        }
+
+        // Draw background per level to make each level a bit more unique
+        function drawBackground(levelIdx) {
+            // sky gradient varies by level
+            const g = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            if ((levelIdx % 4) === 0) {
+                g.addColorStop(0, '#a8edea');
+                g.addColorStop(1, '#fed6e3');
+            } else if ((levelIdx % 4) === 1) {
+                g.addColorStop(0, '#89f7fe');
+                g.addColorStop(1, '#66a6ff');
+            } else if ((levelIdx % 4) === 2) {
+                g.addColorStop(0, '#f6d365');
+                g.addColorStop(1, '#fda085');
+            } else {
+                g.addColorStop(0, '#d4fc79');
+                g.addColorStop(1, '#96e6a1');
+            }
+            ctx.fillStyle = g;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // draw simple layered mountains whose shapes depend on level index
+            const mx = (levelIdx * 23) % 200;
+            for (let m = 0; m < 3; m++) {
+                const offset = m * 40 + (mx * (m+1)) % 60;
+                const peakX = 80 + offset;
+                const peakY = 120 - m*10 - ((levelIdx*7) % 30);
+                ctx.beginPath();
+                ctx.moveTo(-40 + m*30, canvas.height - 40 - m*10);
+                ctx.lineTo(peakX, peakY);
+                ctx.lineTo(canvas.width + 40, canvas.height - 40 - m*10);
+                ctx.closePath();
+                const shade = 0.1 + m*0.12 + ((levelIdx % 3) * 0.03);
+                ctx.fillStyle = `rgba(${100 + m*30}, ${120 + m*10}, ${140 + m*20}, ${0.6 - shade})`;
+                ctx.fill();
+            }
+
+            // draw a few stylized clouds that move slightly per level
+            ctx.fillStyle = 'rgba(255,255,255,0.85)';
+            const cloudCount = 2 + (levelIdx % 3);
+            for (let i=0;i<cloudCount;i++) {
+                const cx = 40 + ((levelIdx * 37 + i*90) % (canvas.width-80));
+                const cy = 40 + ((i*25 + (levelIdx*13)) % 80);
+                ctx.beginPath();
+                ctx.ellipse(cx, cy, 28, 14, 0, 0, Math.PI*2);
+                ctx.ellipse(cx+20, cy+4, 22, 12, 0, 0, Math.PI*2);
+                ctx.ellipse(cx-20, cy+6, 18, 10, 0, 0, Math.PI*2);
+                ctx.fill();
+            }
+        }
+
+        // helper: rectangle-circle intersection test
+        function rectCircleIntersect(rx, ry, rw, rh, cx, cy, r) {
+            // find closest point to circle center within rectangle
+            const closestX = Math.max(rx, Math.min(cx, rx + rw));
+            const closestY = Math.max(ry, Math.min(cy, ry + rh));
+            const dx = cx - closestX;
+            const dy = cy - closestY;
+            return (dx*dx + dy*dy) <= (r*r);
+        }
+
+        // Clear hazards (spikes/enemies) within a circular radius around spawn center
+        function clearSpawnArea(cx, cy, radius) {
+            spikes = spikes.filter(s => {
+                return !rectCircleIntersect(s.x, s.y, s.width, s.height, cx, cy, radius);
+            });
+            enemies = enemies.filter(e => {
+                // use enemy rectangle for test
+                return !rectCircleIntersect(e.x, e.y, e.width, e.height, cx, cy, radius);
+            });
+        }
+
+        function drawEnemies() {
+            enemies.forEach(en => {
+                // if dead, draw faded body and let physics handle falling
+                if (en.dead) {
+                    ctx.fillStyle = 'rgba(150,150,150,0.7)';
+                    ctx.fillRect(en.x, en.y, en.width, en.height);
+                    ctx.strokeStyle = 'rgba(120,120,120,0.6)';
+                    ctx.strokeRect(en.x, en.y, en.width, en.height);
+                    return;
+                }
+
+                // alive body
+                ctx.fillStyle = '#e67e22';
+                ctx.fillRect(en.x, en.y, en.width, en.height);
+                ctx.strokeStyle = '#c0392b';
+                ctx.strokeRect(en.x, en.y, en.width, en.height);
+
+                // eyes
+                const eyeRadius = Math.max(2, Math.min(6, en.width * 0.18));
+                const eyeY = en.y + en.height * 0.3;
+                const leftEyeX = en.x + en.width * 0.28;
+                const rightEyeX = en.x + en.width * 0.72;
+
+                // pupils look toward player
+                const playerCenterX = player.x + player.width * 0.5;
+                const pupOffset = Math.max(-2, Math.min(2, (playerCenterX - (en.x + en.width/2)) / 20));
+
+                ctx.fillStyle = 'white';
+                ctx.beginPath(); ctx.arc(leftEyeX, eyeY, eyeRadius, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.arc(rightEyeX, eyeY, eyeRadius, 0, Math.PI * 2); ctx.fill();
+
+                ctx.fillStyle = 'black';
+                const pupilRadius = Math.max(1, eyeRadius * 0.5);
+                ctx.beginPath(); ctx.arc(leftEyeX + pupOffset, eyeY, pupilRadius, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.arc(rightEyeX + pupOffset, eyeY, pupilRadius, 0, Math.PI * 2); ctx.fill();
+            });
+        }
+
+        function updateEnemies() {
+            enemies.forEach(en => {
+                // initialize helper properties
+                if (typeof en.state === 'undefined') en.state = 'patrol';
+                if (typeof en.respawnTimer === 'undefined') en.respawnTimer = 0;
+
+                // if dead, let it fall and schedule respawn
+                if (en.dead) {
+                    if (typeof en.velocityY !== 'number') en.velocityY = 0;
+                    en.velocityY += player.gravity;
+                    en.y += en.velocityY;
+                    en.respawnTimer -= 1/60;
+                    if (en.respawnTimer <= 0 && en.y > canvas.height + 20) {
+                        // respawn at start
+                        en.x = (typeof en.startX === 'number') ? en.startX : en.x;
+                        en.y = (typeof en.startY === 'number') ? en.startY : (canvas.height - en.height);
+                        en.velocityY = 0;
+                        en.dead = false;
+                        en.respawnTimer = 0;
+                    }
+                    return;
+                }
+
+                // chase AI: if player is relatively close, move toward player
+                const enCenterX = en.x + en.width/2;
+                const playerCenterX = player.x + player.width/2;
+                const dx = playerCenterX - enCenterX;
+                const dy = (player.y + player.height/2) - (en.y + en.height/2);
+                const dist = Math.hypot(dx, dy);
+                const CHASE_DIST = 120;
+                const CHASE_SPEED = 1.4;
+
+                if (dist < CHASE_DIST && Math.abs(dy) < 40) {
+                    // chase player horizontally
+                    const sign = dx > 0 ? 1 : -1;
+                    en.x += sign * CHASE_SPEED;
+                } else if (typeof en.velX === 'number') {
+                    // patrol behavior
+                    en.x += en.velX;
+                    if (en.x < en.minX) { en.x = en.minX; en.velX *= -1; }
+                    if (en.x + en.width > en.maxX) { en.x = en.maxX - en.width; en.velX *= -1; }
+                }
+
+                // vertical physics for enemies (gravity + platform collision)
+                if (typeof en.velocityY !== 'number') en.velocityY = 0;
+                en.velocityY += player.gravity; // reuse player gravity
+                let nextY = en.y + en.velocityY;
+
+                // try to land on any platform
+                for (let i=0;i<platforms.length;i++) {
+                    const plat = platforms[i];
+                    if (en.x + en.width > plat.x && en.x < plat.x + plat.width) {
+                        if (en.y + en.height <= plat.y && nextY + en.height >= plat.y) {
+                            // land on platform
+                            nextY = plat.y - en.height;
+                            en.velocityY = 0;
+                            break;
+                        }
+                    }
+                }
+
+                en.y = nextY;
+
+                // if enemy falls beyond canvas, set a respawn timer so it doesn't immediately reappear
+                if (en.y > canvas.height + 40) {
+                    en.respawnTimer = 1.2; // seconds until allowed to respawn
+                    en.velocityY = 0;
+                }
+            });
+        }
+
+        function rectsOverlap(a, b) {
+            return !(a.x + a.width <= b.x || a.x >= b.x + b.width || a.y + a.height <= b.y || a.y >= b.y + b.height);
+        }
+
+        function playerHit() {
+            // reduce lives and optionally apply temporary invulnerability / knockback
+            // caller may set player.invulnerable manually; here we just decrement lives and update HUD
+            lives = Math.max(0, lives - 1);
+            updateHUD();
+            if (lives <= 0) {
+                setTimeout(() => {
+                    alert('Game over! Restarting.');
+                    lives = 3;
+                    score = 0;
+                    updateHUD();
+                    loadLevel(0);
+                }, 50);
+            } else {
+                // give brief invulnerability so player can recover from knockback
+                player.invulnerable = true;
+                player.invulTimer = 1.5;
+            }
+        }
+
+        function checkPlayerHazards() {
+            const pBox = { x: player.x, y: player.y, width: player.width, height: player.height };
+            // spikes
+            for (let i=0;i<spikes.length;i++) {
+                const s = spikes[i];
+                const sBox = { x: s.x, y: s.y, width: s.width, height: s.height };
+                if (rectsOverlap(pBox, sBox)) {
+                    // spikes are instant-death/hurt: respawn current level with reduced lives
+                    playerHit();
+                    // reload level after short delay to show effect
+                    setTimeout(() => loadLevel(currentLevel), 200);
+                    return;
+                }
+            }
+            // enemies
+            for (let i=0;i<enemies.length;i++) {
+                const e = enemies[i];
+                if (e.dead) continue;
+                const eBox = { x: e.x, y: e.y, width: e.width, height: e.height };
+                if (rectsOverlap(pBox, eBox)) {
+                    // stomp if player is falling and hits top of enemy
+                    const playerFeetPrev = player.y + player.height - player.velocityY;
+                    if (player.velocityY > 0 && playerFeetPrev <= e.y + 6) {
+                        // stomp enemy
+                        score += 50;
+                        updateHUD();
+                        // bounce player a bit
+                        player.velocityY = -player.jumpPower * 0.6;
+                        player.isJumping = true;
+                        // mark enemy dead and give it an upward knock
+                            e.dead = true;
+                            e.velX = 0;
+                            e.velocityY = -6;
+                            e.respawnTimer = 1.2;
+                            playStompSound();
+                    } else {
+                        // normal hit from side/top
+                        if (!player.invulnerable) {
+                            // apply knockback away from enemy
+                            const dir = (player.x + player.width/2) < (e.x + e.width/2) ? -1 : 1;
+                            player.velocityX = -dir * 6;
+                            player.velocityY = -6;
+                            player.invulnerable = true;
+                            player.invulTimer = 1.5;
+                            playerHit();
+                        }
+                    }
+                    return;
+                }
+            }
+        }
+
+        function updatePlayer() {
+            // Handle ducking
+            if (keys['s'] || keys['arrowdown']) {
+                player.isDucking = true;
+            } else {
+                player.isDucking = false;
+            }
+
+            // Horizontal movement: respect existing velocity (for knockback), apply direct input or friction
+            const inputLeft = keys['a'] || keys['arrowleft'];
+            const inputRight = keys['d'] || keys['arrowright'];
+            if (inputLeft && !inputRight) {
+                player.velocityX = -player.speed;
+            } else if (inputRight && !inputLeft) {
+                player.velocityX = player.speed;
+            } else {
+                // no horizontal input: apply friction so knockback decays naturally
+                player.velocityX *= 0.82;
+                if (Math.abs(player.velocityX) < 0.08) player.velocityX = 0;
+            }
+
+            // Jumping
+            if ((keys['w'] || keys['arrowup']) && !player.isJumping) {
+                player.velocityY = -player.jumpPower;
+                player.isJumping = true;
+            }
+
+            // Apply gravity
+            player.velocityY += player.gravity;
+            // Compute next position and resolve collisions axis-by-axis
+            // Horizontal move
+            let nextX = player.x + player.velocityX;
+            if (nextX < 0) nextX = 0;
+            if (nextX + player.width > canvas.width) nextX = canvas.width - player.width;
+
+            // Check horizontal collisions with platforms
+            for (let i=0;i<platforms.length;i++) {
+                const plat = platforms[i];
+                const playerBox = { x: nextX, y: player.y, width: player.width, height: player.height };
+                const platBox = { x: plat.x, y: plat.y, width: plat.width, height: plat.height };
+                if (rectsOverlap(playerBox, platBox)) {
+                    // moving right
+                    if (player.velocityX > 0) {
+                        nextX = plat.x - player.width;
+                    } else if (player.velocityX < 0) {
+                        nextX = plat.x + plat.width;
+                    }
+                    player.velocityX = 0;
+                }
+            }
+
+            player.x = nextX;
+
+            // If player reaches the right edge, progress to next level and award score
+            if (player.x + player.width >= canvas.width) {
+                score += 100;
+                updateHUD();
+                loadLevel(currentLevel + 1);
+                return;
+            }
+
+            // Vertical move
+            let nextY = player.y + player.velocityY;
+
+            // Check vertical collisions with platforms
+            for (let i=0;i<platforms.length;i++) {
+                const plat = platforms[i];
+                const playerBox = { x: player.x, y: nextY, width: player.width, height: player.height };
+                const platBox = { x: plat.x, y: plat.y, width: plat.width, height: plat.height };
+                if (rectsOverlap(playerBox, platBox)) {
+                    // landing on top
+                    if (player.y + player.height <= plat.y) {
+                        nextY = plat.y - player.height;
+                        player.velocityY = 0;
+                        player.isJumping = false;
+                    } else if (player.y >= plat.y + plat.height) {
+                        // hitting head from below
+                        nextY = plat.y + plat.height;
+                        player.velocityY = 0.5; // small downward push
+                    }
+                }
+            }
+
+            player.y = nextY;
+
+            // Floor boundary
+            if (player.y + player.height > canvas.height) {
+                player.y = canvas.height - player.height;
+                player.velocityY = 0;
+                player.isJumping = false;
+            }
+
+            // If fallen far below, reset
+            if (player.y > canvas.height + 200) {
+                loadLevel(currentLevel);
+            }
+
+            // invulnerability timer decrement
+            if (player.invulnerable) {
+                player.invulTimer -= 1/60;
+                if (player.invulTimer <= 0) {
+                    player.invulnerable = false;
+                    player.invulTimer = 0;
+                }
+            }
+
+            // Update enemies and check hazards
+            updateEnemies();
+            checkPlayerHazards();
+        }
+
+        // Ensure audio context resumes on first user gesture so pop sounds work
+        function ensureAudioContext() {
+            if (audioContext.state === 'suspended') {
+                audioContext.resume().catch(() => {});
+            }
+        }
+
+        document.addEventListener('click', ensureAudioContext, { once: true });
+
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // draw level-specific background first
+            drawBackground(currentLevel);
+
+            drawPlatforms();
+            // poll gamepad each frame to update `keys`
+            try { pollGamepad(); } catch(e) {}
+
+            if (!paused) {
+                updatePlayer();
+                drawPlayer();
+            } else {
+                // still draw player and enemies when paused so user sees state
+                drawPlayer();
+                // overlay pause
+                ctx.fillStyle = 'rgba(0,0,0,0.45)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = 'white';
+                ctx.font = '22px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('PAUSED', canvas.width / 2, canvas.height / 2 - 8);
+                ctx.font = '14px Arial';
+                ctx.fillText('Press P to resume', canvas.width / 2, canvas.height / 2 + 18);
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        gameLoop();
+
+        </script>
+
+    <script>
+    (function(){
+    // Extra features: persistence, level editor/importer, remappable keys, particles & parallax polish
+    const LS_KEY = 'platformerState_v1';
+    const KEYMAP_KEY = 'platformerKeymap_v1';
+    const CUSTOM_LEVELS_KEY = 'platformerCustomLevels_v1';
+
+    // helper safe access to globals in main script
+    function safe(name){ return window[name]; }
+
+    // quick helpers
+    function qs(sel){ return document.querySelector(sel); }
+    function ce(tag, props){ const el = document.createElement(tag); Object.assign(el, props||{}); return el; }
+
+    // --- Persistence: save/load lives, score, currentLevel ---
+    function saveState(){
+        try{
+            const state = { lives: window.lives, score: window.score, currentLevel: window.currentLevel };
+            localStorage.setItem(LS_KEY, JSON.stringify(state));
+        }catch(e){ console.warn('saveState failed', e); }
+    }
+    function loadState(){
+        try{
+            const raw = localStorage.getItem(LS_KEY);
+            if (!raw) return false;
+            const s = JSON.parse(raw);
+            if (typeof s.lives === 'number') window.lives = s.lives;
+            if (typeof s.score === 'number') window.score = s.score;
+            if (typeof s.currentLevel === 'number') window.currentLevel = s.currentLevel;
+            return true;
+        }catch(e){ console.warn('loadState failed', e); return false; }
+    }
+
+    // write-through when variables change: monkey-patch updateHUD to also save
+    (function(){
+        const origUpdateHUD = window.updateHUD;
+        if (typeof origUpdateHUD === 'function'){
+            window.updateHUD = function(){ origUpdateHUD(); try{ saveState(); }catch(e){} };
+        }
+    })();
+
+    // Load saved state immediately if present
+    setTimeout(()=>{
+        if (loadState()){
+            if (typeof window.loadLevel === 'function') window.loadLevel(window.currentLevel || 0);
+            if (typeof window.updateHUD === 'function') window.updateHUD();
+        }
+    }, 50);
+
+    // save on unload
+    window.addEventListener('beforeunload', saveState);
+
+    // --- Level editor / JSON importer (simple) ---
+    const settingsPanel = qs('#settingsPanel');
+    if (settingsPanel){
+        const editorBtn = ce('button', { innerText: 'Level Editor', className:'extra-btn' });
+        settingsPanel.appendChild(editorBtn);
+
+        const saveProgBtn = ce('button', { innerText: 'Save Progress', className:'extra-btn' });
+        settingsPanel.appendChild(saveProgBtn);
+        const resetProgBtn = ce('button', { innerText: 'Reset Progress', className:'extra-btn' });
+        settingsPanel.appendChild(resetProgBtn);
+
+        editorBtn.addEventListener('click', openLevelEditor);
+        saveProgBtn.addEventListener('click', ()=>{ saveState(); alert('Progress saved.'); });
+        resetProgBtn.addEventListener('click', ()=>{ if (confirm('Reset lives, score and level?')){ lives = 3; score = 0; currentLevel = 0; saveState(); if (typeof window.loadLevel === 'function') window.loadLevel(0); updateHUD(); } });
+    }
+
+    // create modal
+        const editorModal = ce('div', { id: 'levelEditorModal', role: 'dialog', 'aria-label': 'Level editor' });
+        const editorTextarea = ce('textarea');
+        const editorActions = ce('div', { className:'editor-actions' });
+    const importBtn = ce('button', { innerText: 'Import and Load' });
+    const exportBtn = ce('button', { innerText: 'Export Levels' });
+    const closeBtn = ce('button', { innerText: 'Close' });
+    editorActions.appendChild(exportBtn); editorActions.appendChild(importBtn); editorActions.appendChild(closeBtn);
+        // preview canvas for the editor to give a quick visual of the JSON
+        const previewWrap = ce('div', { className: 'editor-preview' });
+        const previewLabel = ce('div', { innerText: 'Preview', className: 'preview-label' });
+        const previewCanvas = ce('canvas'); previewCanvas.width = 320; previewCanvas.height = 200; previewCanvas.style.border = '1px solid #ccc';
+        previewWrap.appendChild(previewLabel); previewWrap.appendChild(previewCanvas);
+
+        const editorInner = ce('div', { className: 'editor-inner' });
+        editorInner.appendChild(editorTextarea);
+        editorInner.appendChild(previewWrap);
+
+        // level list and controls
+        const levelControls = ce('div', { className: 'level-controls' });
+        const levelSelect = ce('select'); levelSelect.style.marginRight = '8px';
+        const loadSelBtn = ce('button', { innerText: 'Load Selected' });
+        const saveSelBtn = ce('button', { innerText: 'Save Changes' });
+        const addBtn = ce('button', { innerText: 'Add Level' });
+        const delBtn = ce('button', { innerText: 'Delete Level' });
+        levelControls.appendChild(levelSelect);
+        levelControls.appendChild(loadSelBtn);
+        levelControls.appendChild(saveSelBtn);
+        levelControls.appendChild(addBtn);
+        levelControls.appendChild(delBtn);
+        editorInner.appendChild(levelControls);
+
+        // file import/export controls
+        const fileControls = ce('div', { className: 'file-controls' });
+        const exportFileBtn = ce('button', { innerText: 'Download JSON' });
+        const importFileInput = ce('input'); importFileInput.type = 'file'; importFileInput.accept = 'application/json';
+        fileControls.appendChild(exportFileBtn); fileControls.appendChild(importFileInput);
+        editorInner.appendChild(fileControls);
+
+        editorModal.appendChild(editorInner);
+        editorModal.appendChild(editorActions);
+        document.body.appendChild(editorModal);
+
+        const pctx_preview = previewCanvas.getContext('2d');
+
+        // helper: update level select with current window.levels
+        function updateLevelSelect(){
+            levelSelect.innerHTML = '';
+            const lvls = window.levels || [];
+            lvls.forEach((lvl, idx) => {
+                const opt = ce('option'); opt.value = idx; opt.innerText = `Level ${idx+1}`;
+                levelSelect.appendChild(opt);
+            });
+            if (lvls.length === 0) {
+                const opt = ce('option'); opt.value = -1; opt.innerText = '(no levels)'; levelSelect.appendChild(opt);
+            }
+        }
+
+        function loadSelectedToEditor(){
+            const idx = parseInt(levelSelect.value,10);
+            if (isNaN(idx) || !Array.isArray(window.levels) || idx < 0 || idx >= window.levels.length) return alert('No level selected');
+            editorTextarea.value = JSON.stringify(window.levels[idx], null, 2);
+            renderPreviewFromText(editorTextarea.value);
+        }
+
+        function saveEditorToLevel(){
+            const idx = parseInt(levelSelect.value,10);
+            if (isNaN(idx) || !Array.isArray(window.levels) || idx < 0 || idx >= window.levels.length) return alert('No level selected');
+            try{
+                const parsed = JSON.parse(editorTextarea.value);
+                window.levels[idx] = parsed;
+                localStorage.setItem(CUSTOM_LEVELS_KEY, JSON.stringify(window.levels));
+                alert('Level saved.');
+                updateLevelSelect();
+                renderPreviewFromText(editorTextarea.value);
+            }catch(e){ alert('Invalid JSON: ' + e.message); }
+        }
+
+        function addLevel(){
+            const base = { platforms:[{x:0,y:280,width:400,height:20}], enemies:[], spikes:[] };
+            window.levels = window.levels || [];
+            window.levels.push(base);
+            localStorage.setItem(CUSTOM_LEVELS_KEY, JSON.stringify(window.levels));
+            updateLevelSelect();
+            levelSelect.value = window.levels.length - 1;
+            loadSelectedToEditor();
+        }
+
+        function deleteLevel(){
+            const idx = parseInt(levelSelect.value,10);
+            if (isNaN(idx) || !Array.isArray(window.levels) || idx < 0 || idx >= window.levels.length) return alert('No level selected');
+            if (!confirm('Delete selected level?')) return;
+            window.levels.splice(idx,1);
+            localStorage.setItem(CUSTOM_LEVELS_KEY, JSON.stringify(window.levels));
+            updateLevelSelect();
+            levelSelect.selectedIndex = Math.max(0, idx-1);
+            loadSelectedToEditor();
+        }
+
+        function exportToFile(){
+            const data = JSON.stringify(window.levels || [], null, 2);
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = ce('a'); a.href = url; a.download = 'levels.json'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+        }
+
+        importFileInput.addEventListener('change', (e)=>{
+            const f = e.target.files && e.target.files[0]; if (!f) return;
+            const rdr = new FileReader(); rdr.onload = ()=>{
+                try{ const parsed = JSON.parse(rdr.result); if (!Array.isArray(parsed)) throw new Error('Invalid levels array'); window.levels = parsed; localStorage.setItem(CUSTOM_LEVELS_KEY, JSON.stringify(parsed)); alert('Imported file levels.'); updateLevelSelect(); }catch(err){ alert('Import failed: ' + err.message); }
+            };
+            rdr.readAsText(f);
+        });
+
+        // wire buttons
+        loadSelBtn.addEventListener('click', loadSelectedToEditor);
+        saveSelBtn.addEventListener('click', saveEditorToLevel);
+        addBtn.addEventListener('click', addLevel);
+        delBtn.addEventListener('click', deleteLevel);
+        exportFileBtn.addEventListener('click', exportToFile);
+
+
+    exportBtn.addEventListener('click', ()=>{
+        try{
+            const data = JSON.stringify(window.levels, null, 2);
+            editorTextarea.value = data;
+            alert('Levels exported to the editor textarea. You can copy them.');
+            renderPreviewFromText(data);
+        }catch(e){ alert('Export failed'); }
+    });
+
+    importBtn.addEventListener('click', ()=>{
+        try{
+            const txt = editorTextarea.value.trim();
+            if (!txt) return alert('Editor empty');
+            const parsed = JSON.parse(txt);
+            if (!Array.isArray(parsed)) return alert('Expected an array of levels');
+            window.levels = parsed;
+            // persist custom levels in localStorage so user won't lose them
+            localStorage.setItem(CUSTOM_LEVELS_KEY, JSON.stringify(parsed));
+            alert('Imported levels. Loading level 0.');
+            if (window.loadLevel) window.loadLevel(0);
+            if (window.updateHUD) window.updateHUD();
+            editorModal.classList.remove('active');
+            renderPreviewFromText(txt);
+        }catch(e){ alert('Import failed: ' + e.message); }
+    });
+
+    closeBtn.addEventListener('click', ()=> editorModal.classList.remove('active'));
+
+    function openLevelEditor(){
+        const saved = localStorage.getItem(CUSTOM_LEVELS_KEY);
+        if (saved) editorTextarea.value = JSON.stringify(JSON.parse(saved), null, 2);
+        else editorTextarea.value = JSON.stringify(window.levels || [], null, 2);
+        editorModal.classList.add('active');
+        renderPreviewFromText(editorTextarea.value);
+    }
+
+    // render a simple preview of JSON levels into the preview canvas
+    function renderPreviewFromText(txt){
+        try{
+            const parsed = JSON.parse(txt);
+            if (!Array.isArray(parsed) || parsed.length === 0) return clearPreview();
+            // render first level preview
+            const lvl = parsed[0];
+            renderLevelPreview(lvl);
+        }catch(e){ clearPreview(); }
+    }
+
+    function clearPreview(){
+        pctx_preview.clearRect(0,0,previewCanvas.width, previewCanvas.height);
+        pctx_preview.fillStyle = '#f7f7f7'; pctx_preview.fillRect(0,0,previewCanvas.width, previewCanvas.height);
+        pctx_preview.fillStyle = '#444'; pctx_preview.fillText('Preview unavailable', 12, 20);
+    }
+
+    function renderLevelPreview(level){
+        pctx_preview.clearRect(0,0,previewCanvas.width, previewCanvas.height);
+        pctx_preview.fillStyle = '#86c5ff'; pctx_preview.fillRect(0,0,previewCanvas.width, previewCanvas.height);
+        const scaleX = previewCanvas.width / 400; const scaleY = previewCanvas.height / 300;
+        // draw platforms
+        pctx_preview.fillStyle = '#34495e';
+        (level.platforms||[]).forEach(p=>{
+            pctx_preview.fillRect(p.x*scaleX, p.y*scaleY, p.width*scaleX, p.height*scaleY);
+        });
+        // draw spikes
+        pctx_preview.fillStyle = '#e74c3c';
+        (level.spikes||[]).forEach(s=>{
+            const x = s.x*scaleX, y=s.y*scaleY, w=s.width*scaleX, h=s.height*scaleY;
+            pctx_preview.beginPath(); pctx_preview.moveTo(x, y+h); pctx_preview.lineTo(x+w/2, y); pctx_preview.lineTo(x+w, y+h); pctx_preview.closePath(); pctx_preview.fill();
+        });
+        // draw enemies
+        pctx_preview.fillStyle = '#e67e22';
+        (level.enemies||[]).forEach(e=>{
+            pctx_preview.fillRect(e.x*scaleX, e.y*scaleY, e.width*scaleX, e.height*scaleY);
+        });
+    }
+
+    editorTextarea.addEventListener('input', ()=>{ renderPreviewFromText(editorTextarea.value); });
+
+    // --- Remappable keys ---
+    const remapModal = ce('div', { id: 'remapModal' });
+    remapModal.innerHTML = '<h3>Remap Controls</h3><div id="remapList"></div><div style="text-align:right;margin-top:8px;"><button id="closeRemap">Close</button></div>';
+    document.body.appendChild(remapModal);
+    const remapList = remapModal.querySelector('#remapList');
+    const closeRemap = remapModal.querySelector('#closeRemap');
+    closeRemap.addEventListener('click', ()=> remapModal.classList.remove('active'));
+
+    const defaultMap = JSON.parse(localStorage.getItem(KEYMAP_KEY) || '{}');
+    let keyMap = Object.assign({}, defaultMap);
+
+    function openRemapUI(){
+        remapList.innerHTML = '';
+        const controls = ['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','a','d','w','s'];
+        controls.forEach(c => {
+            const row = ce('div', { className:'remap-row' });
+            const label = ce('div', { innerText: c, style:'width:80px;' });
+            const cur = ce('div', { className:'remap-key', innerText: keyMap[c] || c });
+            const btn = ce('button', { innerText:'Set' });
+            btn.addEventListener('click', ()=>{
+                const listener = (ev)=>{
+                    keyMap[c] = ev.key;
+                    cur.innerText = ev.key;
+                    localStorage.setItem(KEYMAP_KEY, JSON.stringify(keyMap));
+                    window.removeEventListener('keydown', listener);
+                    alert('Key mapped');
+                };
+                alert('Press the key to map now');
+                window.addEventListener('keydown', listener);
+            });
+            row.appendChild(label); row.appendChild(cur); row.appendChild(btn);
+            remapList.appendChild(row);
+        });
+        remapModal.classList.add('active');
+    }
+
+    // Add remap button to settings
+    if (settingsPanel){
+        const remapBtn = ce('button', { innerText: 'Remap Keys', className:'extra-btn' });
+        settingsPanel.appendChild(remapBtn);
+        remapBtn.addEventListener('click', openRemapUI);
+    }
+
+    // intercept keyboard events to translate according to keyMap
+    window.addEventListener('keydown', (e)=>{
+        try{
+            const map = keyMap || {};
+            for (let from in map){ if (e.key === map[from]){ const ne = new KeyboardEvent('keydown', { key: from }); window.dispatchEvent(ne); e.preventDefault(); return; } }
+        }catch(err){}
+    }, true);
+    window.addEventListener('keyup', (e)=>{
+        try{
+            for (const from in keyMap){ if (e.key === keyMap[from]){ const ne = new KeyboardEvent('keyup', { key: from }); window.dispatchEvent(ne); e.preventDefault(); return; } }
+        }catch(err){}
+    }, true);
+
+    // --- Particles system overlayed on canvas for stomp / enemy-death feedback ---
+    const particleContainer = ce('div', { id:'particleLayer' });
+    const pCanvas = ce('canvas');
+    pCanvas.width = 400; pCanvas.height = 300;
+    particleContainer.appendChild(pCanvas);
+    document.body.appendChild(particleContainer);
+    const pctx = pCanvas.getContext('2d');
+    let particles = [];
+
+    function spawnParticles(x,y,color,count){
+        for (let i=0;i<count;i++){
+            particles.push({ x:x, y:y, vx:(Math.random()-0.5)*4, vy:(Math.random()-1.5)*4, life: 0.8 + Math.random()*0.6, color: color, size: 2 + Math.random()*3 });
+        }
+    }
+
+    // expose spawnParticles for use by main game (if desired)
+    window.platformerExtras = window.platformerExtras || {};
+    window.platformerExtras.spawnParticles = spawnParticles;
+
+    function updateParticles(dt){
+        for (let i=particles.length-1;i>=0;i--){
+            const p = particles[i];
+            p.x += p.vx; p.y += p.vy; p.vy += 0.15; p.life -= dt; p.vx *= 0.995;
+            if (p.life <= 0) particles.splice(i,1);
+        }
+    }
+    function drawParticles(){
+        pctx.clearRect(0,0,pCanvas.width,pCanvas.height);
+        particles.forEach(p=>{
+            pctx.fillStyle = p.color;
+            pctx.globalAlpha = Math.max(0, p.life);
+            pctx.beginPath(); pctx.arc(p.x, p.y, p.size, 0, Math.PI*2); pctx.fill();
+        });
+        pctx.globalAlpha = 1;
+    }
+
+    let lastT = performance.now();
+    function particleLoop(t){
+        const dt = Math.min(0.05, (t - lastT)/1000);
+        lastT = t;
+        updateParticles(dt);
+        drawParticles();
+        requestAnimationFrame(particleLoop);
+    }
+    requestAnimationFrame(particleLoop);
+
+    // Monkey-patch playStompSound to spawn particles on stomp
+    if (typeof window.playStompSound === 'function'){
+        const orig = window.playStompSound;
+        window.playStompSound = function(){ try{ orig(); }catch(e){};
+            // spawn orange particles around player's feet
+            const px = (window.player && window.player.x) ? window.player.x + (window.player.width||30)/2 : 50;
+            const py = (window.player && window.player.y) ? window.player.y + (window.player.height||30) : 200;
+            spawnParticles(px, py, '#f39c12', 18);
+        };
+    }
+
+    // Sync particle canvas size with main game canvas and window resize
+    function syncParticleCanvasSize(){
+        const gameCanvas = qs('#gameCanvas');
+        if (!gameCanvas) return;
+        pCanvas.width = gameCanvas.width;
+        pCanvas.height = gameCanvas.height;
+        // position overlay to match visual scaling
+        pCanvas.style.position = 'absolute';
+        const rect = gameCanvas.getBoundingClientRect();
+        pCanvas.style.left = rect.left + 'px';
+        pCanvas.style.top = rect.top + 'px';
+        pCanvas.style.width = rect.width + 'px';
+        pCanvas.style.height = rect.height + 'px';
+        pCanvas.style.pointerEvents = 'none';
+    }
+    window.addEventListener('resize', syncParticleCanvasSize);
+    setTimeout(syncParticleCanvasSize, 120);
+
+    // Parallax: wrap drawBackground to paint an extra slow-moving foreground
+    if (typeof window.drawBackground === 'function'){
+        const origBg = window.drawBackground;
+        window.drawBackground = function(levelIdx){
+            const ctx = (window.ctx); if (!ctx) return origBg(levelIdx);
+            ctx.save();
+            ctx.globalAlpha = 0.25;
+            for (let i=0;i<3;i++){ ctx.fillStyle = `rgba(${120+i*20},${140+i*10},${160+i*15},0.35)`; ctx.beginPath(); ctx.ellipse(40+i*60 + (levelIdx*7)%80, 240 - i*10, 80, 30, 0, 0, Math.PI*2); ctx.fill(); }
+            ctx.restore();
+            try{ origBg(levelIdx); }catch(e){ console.warn(e); }
+        };
+    }
+
+    // --- Checkpoints & Autosave UI ---
+    if (settingsPanel){
+        const chkLabel = ce('label', { innerText: 'Autosave:' });
+        chkLabel.style.marginLeft = '8px';
+        const autosaveToggle = ce('input'); autosaveToggle.type = 'checkbox'; autosaveToggle.checked = true; autosaveToggle.style.marginLeft = '6px';
+        chkLabel.appendChild(autosaveToggle);
+        settingsPanel.appendChild(chkLabel);
+
+        const cpBtn = ce('button', { innerText: 'Create Checkpoint', className:'extra-btn' });
+        const restoreBtn = ce('button', { innerText: 'Restore Checkpoint', className:'extra-btn' });
+        settingsPanel.appendChild(cpBtn); settingsPanel.appendChild(restoreBtn);
+        cpBtn.setAttribute('aria-label','Create checkpoint'); cpBtn.tabIndex = 0;
+        restoreBtn.setAttribute('aria-label','Restore checkpoint'); restoreBtn.tabIndex = 0;
+
+        cpBtn.addEventListener('click', ()=>{
+            try{ const snapshot = { lives, score, currentLevel, levels: window.levels }; localStorage.setItem(LS_KEY + '_checkpoint', JSON.stringify(snapshot)); alert('Checkpoint created'); }catch(e){ console.warn(e); alert('Failed to create checkpoint'); }
+        });
+        restoreBtn.addEventListener('click', ()=>{
+            try{ const raw = localStorage.getItem(LS_KEY + '_checkpoint'); if (!raw) return alert('No checkpoint found'); const snap = JSON.parse(raw); lives = snap.lives; score = snap.score; currentLevel = snap.currentLevel; if (snap.levels) window.levels = snap.levels; if (window.loadLevel) window.loadLevel(currentLevel); if (window.updateHUD) window.updateHUD(); alert('Checkpoint restored'); }catch(e){ console.warn(e); alert('Restore failed'); }
+        });
+
+        // autosave on level load and HUD updates when enabled
+        const origLoadLevel = window.loadLevel;
+        if (typeof origLoadLevel === 'function'){
+            window.loadLevel = function(i){ origLoadLevel(i); try{ if (autosaveToggle.checked) saveState(); }catch(e){} };
+        }
+        const origUpdateHUD2 = window.updateHUD;
+        if (typeof origUpdateHUD2 === 'function'){
+            window.updateHUD = function(){ origUpdateHUD2(); try{ if (autosaveToggle.checked) saveState(); }catch(e){} };
+        }
+    }
+
+    // Accessibility: add aria labels to main controls
+    const ariaPairs = [ ['#changeButton','Change center text'], ['#musicPlay','Play music'], ['#musicPause','Pause music'], ['#musicMute','Mute music'], ['#pauseButton','Pause game'], ['#fullscreenButton','Toggle fullscreen'] ];
+    ariaPairs.forEach(([sel,lab])=>{ const el = qs(sel); if (el) el.setAttribute('aria-label', lab); });
+
+    // add roles/labels to core UI if present
+    const corePairs = [ ['#settingsPanel','Settings panel'], ['#musicPanel','Music panel'], ['#hud','Game HUD'], ['#gameCanvas','Game canvas'] ];
+    corePairs.forEach(([sel,lab])=>{ const el = qs(sel); if (el) el.setAttribute('role','region'); if (el) el.setAttribute('aria-label', lab); });
+
+    // Small dev test harness
+    const devBox = ce('div', { id:'devTestOutput', className:'hidden' });
+    const tests = [];
+    tests.push({ name:'levelsExist', run:()=>Array.isArray(window.levels) && window.levels.length >= 10, msg:'levels length >= 10' });
+    tests.push({ name:'canvas', run:()=>!!qs('#gameCanvas'), msg:'canvas exists' });
+    let testResults = tests.map(t=> ({ name:t.name, ok: !!t.run(), msg: t.msg }));
+    devBox.innerText = testResults.map(r=> (r.ok? '✓ ':'✗ ') + r.msg).join('\n');
+    devBox.classList.remove('hidden');
+    document.body.appendChild(devBox);
+
+    // expose save/load for debugging
+    window.platformerExtras = { saveState, loadState, openLevelEditor };
+
+    // quick visual polish: fade-in HUD on start
+    const hud = qs('#hud'); if (hud){ hud.style.transition = 'opacity 600ms'; hud.style.opacity = 0; setTimeout(()=>hud.style.opacity = 1, 200); }
+
+})();
+    </script>
+</body>
+</html>
