@@ -1652,13 +1652,9 @@
             document.getElementById('startMenu').style.display = 'flex';
             game.paused = true;
             game.started = false;
-<<<<<<< HEAD
             // Reset all progress when returning to menu
             game.currentLevel = 1;
             game.coins = 0;
-=======
-            // Clear custom level when returning to menu
->>>>>>> 502b9c04c813daecf88ff7cd4aba25a3d53d7f1c
             game.customLevel = null;
             currentLevelData = generateLevel(game.currentLevel);
             document.getElementById('settingsBtn').style.display = 'none';
@@ -1694,10 +1690,7 @@
                     enemy.vx = 0;
                     enemy.vy = 0;
                     enemy.onGround = false;
-<<<<<<< HEAD
                     enemy.direction = 1; // Reset direction to right
-=======
->>>>>>> 502b9c04c813daecf88ff7cd4aba25a3d53d7f1c
                 });
             } else {
                 currentLevelData = generateLevel(game.currentLevel);
@@ -1726,14 +1719,9 @@
         // Update UI
         function updateUI() {
             if (game.customLevel) {
-<<<<<<< HEAD
                 document.getElementById('levelDisplay').style.display = 'none';
             } else {
                 document.getElementById('levelDisplay').style.display = 'block';
-=======
-                document.getElementById('levelDisplay').textContent = 'Custom Level';
-            } else {
->>>>>>> 502b9c04c813daecf88ff7cd4aba25a3d53d7f1c
                 document.getElementById('levelDisplay').textContent =
                     `Level: ${game.currentLevel} / 100`;
             }
@@ -2252,10 +2240,7 @@
                     enemy.vx = 0;
                     enemy.vy = 0;
                     enemy.onGround = false;
-<<<<<<< HEAD
                     enemy.direction = 1; // Start moving right
-=======
->>>>>>> 502b9c04c813daecf88ff7cd4aba25a3d53d7f1c
 
                     // Find the platform this enemy is on to set boundaries
                     let enemyPlatform = null;
@@ -2268,7 +2253,6 @@
                     });
 
                     if (enemyPlatform) {
-<<<<<<< HEAD
                         // Enemy is on a platform - constrain to that platform
                         enemy.minX = Math.max(0, enemyPlatform.x);
                         enemy.maxX = Math.min(800 - enemy.width, enemyPlatform.x + enemyPlatform.width - enemy.width);
@@ -2276,14 +2260,6 @@
                         // If no platform found, patrol on the ground/floor but within screen bounds
                         enemy.minX = 0;
                         enemy.maxX = 800 - enemy.width;
-=======
-                        enemy.minX = enemyPlatform.x;
-                        enemy.maxX = enemyPlatform.x + enemyPlatform.width - enemy.width;
-                    } else {
-                        // If no platform found, constrain to a small area around spawn
-                        enemy.minX = enemy.x - 50;
-                        enemy.maxX = enemy.x + 50;
->>>>>>> 502b9c04c813daecf88ff7cd4aba25a3d53d7f1c
                     }
                 }
             });
@@ -2516,12 +2492,9 @@
                 document.getElementById('levelDisplay').style.display = 'block';
                 document.getElementById('coinDisplay').style.display = 'block';
                 document.getElementById('fpsDisplay').style.display = 'block';
-<<<<<<< HEAD
             } else {
                 // Return to start menu if game hasn't started
                 document.getElementById('startMenu').style.display = 'flex';
-=======
->>>>>>> 502b9c04c813daecf88ff7cd4aba25a3d53d7f1c
             }
         });
 
